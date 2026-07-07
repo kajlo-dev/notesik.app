@@ -146,6 +146,18 @@ export function RichNoteEditor({ id, html, onChange, onBlur, placeholder, onExpa
     onChange(id, ref.current.innerHTML)
   }
 
+  // Przeglądarki domyślnie NIE podążają za linkiem kliniętym/dotkniętym wewnątrz
+  // contentEditable - taki klik traktują jak zwykłe ustawienie kursora do edycji, nie jak
+  // nawigację. Trzeba to obsłużyć ręcznie, inaczej linki do odnośników biblijnych są tylko
+  // niebieskie i podkreślone, ale nieklikalne.
+  const handleClick = (e) => {
+    const link = e.target.closest?.('a')
+    if (link && ref.current?.contains(link)) {
+      e.preventDefault()
+      window.open(link.href, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   return (
     <div className="rich-note">
       <Toolbar onCommand={exec} />
@@ -158,6 +170,7 @@ export function RichNoteEditor({ id, html, onChange, onBlur, placeholder, onExpa
           data-placeholder={placeholder}
           onInput={() => onChange(id, ref.current.innerHTML)}
           onBlur={onBlur}
+          onClick={handleClick}
         />
         {expandable && (
           <button type="button" className="rich-note-expand-btn" onClick={onExpand} aria-label="Powiększ notatkę">
