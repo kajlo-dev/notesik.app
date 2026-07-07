@@ -1,8 +1,9 @@
-import { EditDocumentIcon, ListIcon, SettingsIcon } from './icons/icons'
+import { EditDocumentIcon, ListIcon, SearchIcon, SettingsIcon } from './icons/icons'
 
 const TABS = [
   { id: 'program', label: 'Program', Icon: EditDocumentIcon },
   { id: 'list', label: 'Lista', Icon: ListIcon },
+  { id: 'search', label: 'Szukaj', Icon: SearchIcon },
   { id: 'settings', label: 'Ustawienia', Icon: SettingsIcon },
 ]
 

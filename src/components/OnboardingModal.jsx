@@ -16,7 +16,8 @@ export function OnboardingModal({ onClose }) {
 
         <h2 className="h6 text-primary">📝 Program</h2>
         <p className="text-secondary">
-          Strona główna. Pokazuje aktualnie otwarty program, podzielony na dni i sesje. Przy
+          Strona główna. Zakładki u góry pozwalają wybrać dzień (kongres) i porę dnia (przed/po
+          południu) - przy otwarciu appka sama ustawia dzisiejszy dzień i aktualną porę. Przy
           każdym punkcie programu jest pole na notatkę - nie ma go tylko przy pieśniach, muzyce i
           modlitwach.
         </p>
@@ -33,6 +34,23 @@ export function OnboardingModal({ onClose }) {
           Wszystkie zapisane programy. Możesz wrócić do dowolnego z nich, usunąć go albo
           wyeksportować notatki do jednego pliku PDF - gotowego do wydrukowania jako kartki do
           skoroszytu.
+        </p>
+
+        <h2 className="h6 text-primary">💾 Kopie zapasowe i historia wersji</h2>
+        <p className="text-secondary">
+          Ikona kopii przy programie (w Liście albo przypomnienie na stronie Program) zapisuje
+          notatki jako plik JSON przez systemowe okno „Udostępnij" - sam wybierasz, gdzie ma
+          trafić (Dysk Google, OneDrive, Pliki…). Każdy taki zapis dokłada się też do wewnętrznej
+          „Historii" programu w Liście - można kliknąć dowolny wcześniejszy zapis, żeby przywrócić
+          tamte notatki, tak jak cofanie się w git. Obecny stan zawsze najpierw trafia do historii,
+          więc nic nie ginie.
+        </p>
+
+        <h2 className="h6 text-primary">🔎 Szukaj</h2>
+        <p className="text-secondary">
+          Przeszukuje treść wszystkich notatek ze wszystkich zapisanych programów naraz. Wpisanie
+          kilku słów szuka pozycji, które zawierają je wszystkie; fraza w cudzysłowie (np.{' '}
+          <code>&quot;dobra nowina&quot;</code>) szuka dokładnie takiego zwrotu.
         </p>
 
         <h2 className="h6 text-primary">⚙️ Ustawienia</h2>

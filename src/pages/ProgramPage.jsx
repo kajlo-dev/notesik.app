@@ -5,6 +5,7 @@ import { isNonNoteItem, getItemCategory } from '../lib/itemCategory'
 import { matchQuestionsToItems } from '../lib/reviewQuestions'
 import { saveProgramBackup, hasUnsavedBackup, formatMinutesAgo } from '../lib/backupExport'
 import { buildNotesMap, mergeNotesIntoProgram } from '../lib/notesModel'
+import { findTodayDayIndex, findCurrentSectionIndex } from '../lib/dayTime'
 import { RichNoteEditor, RichNoteFullscreen } from '../components/RichNoteEditor'
 import { CloseIcon } from '../components/icons/icons'
 
@@ -62,7 +63,7 @@ function NoteSlot({ id, html, notesMode, onChange, onBlur, onExpand, placeholder
 
 function SymposiumCard({ item, questionId, notes, notesMode, onChange, onBlur, onExpand }) {
   return (
-    <div className="card mb-3 program-item-card item-sympozjum">
+    <div id={item.id} className="card mb-3 program-item-card item-sympozjum">
       <div className="card-body">
         <ItemHeading item={item} />
         <TitleWithQuestionLink item={item} questionId={questionId} />
@@ -92,7 +93,7 @@ function SymposiumCard({ item, questionId, notes, notesMode, onChange, onBlur, o
 function ProgramItem({ item, questionId, note, notesMode, onChange, onBlur, onExpand }) {
   const category = getItemCategory(item)
   return (
-    <div className={`card mb-3 program-item-card ${CATEGORY_CLASS[category] || ''}`}>
+    <div id={item.id} className={`card mb-3 program-item-card ${CATEGORY_CLASS[category] || ''}`}>
       <div className="card-body">
         <ItemHeading item={item} />
         <TitleWithQuestionLink item={item} questionId={questionId} />
@@ -147,6 +148,23 @@ function ReviewQuestions({ questions, notes, notesMode, onChange, onBlur, onExpa
   )
 }
 
+// Znajduje, w którym dniu/sekcji leży dany punkt programu (albo podpunkt sympozjum) - używane,
+// żeby po przejściu z wyników wyszukiwania od razu ustawić właściwe zakładki dnia/pory.
+function findItemLocation(program, itemId) {
+  if (!program || !itemId) return null
+  for (let di = 0; di < program.days.length; di++) {
+    const day = program.days[di]
+    for (let si = 0; si < day.sections.length; si++) {
+      const section = day.sections[si]
+      for (const item of section.items) {
+        if (item.id === itemId) return { dayIndex: di, sectionIndex: si }
+        if (item.subitems.some((s) => s.id === itemId)) return { dayIndex: di, sectionIndex: si }
+      }
+    }
+  }
+  return null
+}
+
 function BackupReminder({ program, onBackup }) {
   const [dismissed, setDismissed] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -184,11 +202,12 @@ function BackupReminder({ program, onBackup }) {
   )
 }
 
-export function ProgramPage({ onNavigate }) {
+export function ProgramPage({ onNavigate, focusItemId }) {
   const [program, setProgram] = useState(null)
   const [notes, setNotes] = useState({})
   const [autosaveMinutes, setAutosaveMinutes] = useState(2)
   const [activeDayIndex, setActiveDayIndex] = useState(0)
+  const [activeSectionIndex, setActiveSectionIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [expandedNote, setExpandedNote] = useState(null)
   const notesRef = useRef(notes)
@@ -207,13 +226,25 @@ export function ProgramPage({ onNavigate }) {
       setProgram(p || null)
       setNotes(buildNotesMap(p))
       setAutosaveMinutes(settings.autosaveIntervalMinutes)
+      if (p) {
+        const location = focusItemId ? findItemLocation(p, focusItemId) : null
+        const dayIdx = location ? location.dayIndex : findTodayDayIndex(p.days)
+        setActiveDayIndex(dayIdx)
+        setActiveSectionIndex(location ? location.sectionIndex : findCurrentSectionIndex(p.days[dayIdx]?.sections))
+      }
       setLoading(false)
     }
     load()
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [focusItemId])
+
+  useEffect(() => {
+    if (!focusItemId || loading) return
+    const el = document.getElementById(focusItemId)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [focusItemId, loading, activeDayIndex, activeSectionIndex])
 
   const persist = useCallback((notesSnapshot) => {
     setProgram((prev) => {
@@ -271,6 +302,7 @@ export function ProgramPage({ onNavigate }) {
   }
 
   const day = program.days[activeDayIndex] || program.days[0]
+  const section = day.sections[activeSectionIndex] || day.sections[0]
   const notesMode = { expandedId: expandedNote?.id ?? null }
 
   return (
@@ -283,9 +315,26 @@ export function ProgramPage({ onNavigate }) {
               key={i}
               type="button"
               className={`btn btn-sm ${i === activeDayIndex ? 'btn-primary' : 'btn-outline-secondary'}`}
-              onClick={() => setActiveDayIndex(i)}
+              onClick={() => {
+                setActiveDayIndex(i)
+                setActiveSectionIndex(0)
+              }}
             >
               {d.dayName || `Dzień ${i + 1}`}
+            </button>
+          ))}
+        </div>
+      )}
+      {day.sections.length > 1 && (
+        <div className="day-tabs section-tabs d-flex gap-2 pb-2 overflow-auto">
+          {day.sections.map((s, si) => (
+            <button
+              key={si}
+              type="button"
+              className={`btn btn-sm ${si === activeSectionIndex ? 'btn-primary' : 'btn-outline-secondary'}`}
+              onClick={() => setActiveSectionIndex(si)}
+            >
+              {s.name === 'PRZED POŁUDNIEM' ? 'Przed południem' : s.name === 'PO POŁUDNIU' ? 'Po południu' : s.name}
             </button>
           ))}
         </div>
@@ -293,8 +342,8 @@ export function ProgramPage({ onNavigate }) {
       <div className="p-3">
         <h1 className="h6 text-secondary mb-3">{program.title}</h1>
         {day.theme && <p className="fst-italic text-secondary mb-3">{day.theme}</p>}
-        {day.sections.map((section, si) => (
-          <div key={si} className="mb-4">
+        {section && (
+          <div className="mb-4">
             <h2 className="h6 text-uppercase text-primary mb-2">{section.name}</h2>
             {section.items.map((item) =>
               isNonNoteItem(item) ? (
@@ -324,7 +373,7 @@ export function ProgramPage({ onNavigate }) {
               ),
             )}
           </div>
-        ))}
+        )}
         <ReviewQuestions
           questions={program.reviewQuestions}
           notes={notes}

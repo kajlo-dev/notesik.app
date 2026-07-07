@@ -359,6 +359,13 @@ body {
   filter: brightness(1.08);
 }
 
+.search-results-table td {
+  cursor: pointer;
+}
+.search-results-table td:first-child {
+  max-width: 40vw;
+}
+
 .desktop-block {
   height: 100dvh;
   display: flex;

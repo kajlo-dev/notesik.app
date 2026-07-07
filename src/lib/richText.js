@@ -9,6 +9,13 @@ export function hasNoteContent(html) {
   return div.textContent.trim().length > 0
 }
 
+export function htmlToPlainText(html) {
+  if (!html) return ''
+  const div = document.createElement('div')
+  div.innerHTML = html
+  return div.textContent.replace(/\s+/g, ' ').trim()
+}
+
 const FONT_SIZE_TO_PT = { 1: 8, 2: 9, 3: 10, 4: 12, 5: 14, 6: 17, 7: 20 }
 
 // Zamienia HTML notatki na płaską listę fragmentów tekstu ze stylem (do renderowania w PDF,

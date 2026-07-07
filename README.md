@@ -28,8 +28,9 @@ Twoim urządzeniu. Przy pierwszym uruchomieniu aplikacja sama pokaże tę instru
 <details>
 <summary><strong>📝 Program</strong></summary>
 
-Strona główna. Pokazuje aktualnie otwarty program, podzielony na dni (dla kongresu: piątek,
-sobota, niedziela) i sesje (przed południem / po południu).
+Strona główna. Zakładki u góry pozwalają wybrać dzień (dla kongresu: piątek, sobota, niedziela)
+i porę dnia (przed południem / po południu) — przy otwarciu aplikacja sama ustawia dzisiejszy
+dzień i aktualną porę.
 
 Przy każdym punkcie programu jest pole na notatkę — nie ma go tylko przy pieśniach, muzyce
 i modlitwach, bo nie ma tam czego notować. Karty są kolorowane według rodzaju punktu:
@@ -67,6 +68,34 @@ Wszystkie zapisane programy — z miniaturką okładki, nazwą i notatkami albo 
 </details>
 
 <details>
+<summary><strong>💾 Kopie zapasowe i historia wersji</strong></summary>
+
+Na telefonie przeglądarka nie pozwala aplikacji cicho zapisywać pliku na dysk w tle - zapis
+kopii to zawsze jedno dotknięcie i systemowe okno **Udostępnij**, w którym sam wybierasz miejsce
+(Dysk Google, OneDrive, Pliki…). Nazwa pliku zawiera datę i godzinę, więc kolejne zapisy nie
+nadpisują się nawzajem.
+
+Każdy udany zapis dokłada się też do wewnętrznej **historii wersji** programu, widocznej w
+Liście pod rozwijanym „Historia". Kliknięcie dowolnego wcześniejszego zapisu przywraca notatki
+z tamtego momentu — jak cofanie się w git: obecny stan zawsze najpierw ląduje w historii, więc
+nic nie ginie.
+
+Na stronie Program pojawia się też nienachalne przypomnienie, gdy notatki zmieniły się od
+ostatniego zapisu.
+
+</details>
+
+<details>
+<summary><strong>🔎 Szukaj</strong></summary>
+
+Przeszukuje treść notatek ze **wszystkich** zapisanych programów naraz. Kilka słów bez
+cudzysłowu = szuka pozycji zawierających wszystkie te słowa. Fraza w cudzysłowie
+(np. „dobra nowina") = szuka dokładnie takiego zwrotu. Wyniki pokazują, w którym programie
+i przy którym punkcie programu jest dopasowanie - kliknięcie przenosi od razu tam.
+
+</details>
+
+<details>
 <summary><strong>⚙️ Ustawienia</strong></summary>
 
 - **Pobierz program** — lista aktualnych programów kongresów i zgromadzeń (z miniaturkami
@@ -74,7 +103,7 @@ Wszystkie zapisane programy — z miniaturką okładki, nazwą i notatkami albo 
   zacząć robić notatki.
 - **Wgraj plik PDF ręcznie** — jeśli potrzebnego programu nie ma jeszcze na liście, można wgrać
   własny plik PDF pobrany skądinąd.
-- **Automatyczny zapis notatek** — wybór co ile minut (1/2/5) aplikacja ma zapisywać notatki
+- **Automatyczny zapis notatek** — wybór co ile minut (1/2/5/10) aplikacja ma zapisywać notatki
   w tle.
 - **Pokaż jak używać** — ponownie wywołuje instrukcję obsługi.
 
