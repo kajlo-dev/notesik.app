@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { SearchIcon, CloseIcon } from './icons/icons'
+import { matchBibleReferenceAtEnd } from '../lib/bibleReference'
 
 const COLORS = [
   { name: 'czarny', value: '#1a1a1a' },
@@ -63,6 +64,50 @@ function Toolbar({ onCommand }) {
   )
 }
 
+// Gdy użytkownik kończy linijkę Enterem, sprawdza czy to, co właśnie napisał, wygląda jak
+// odnośnik biblijny (np. "Ps 16:11" albo "Obj. 17:2-5") i jeśli tak - zamienia go w link do
+// jw.org. Działa w obrębie jednego węzła tekstowego (bez przeskakiwania przez formatowanie
+// zmienione w połowie odnośnika) - przy zwykłym pisaniu notatki to jedyny realny przypadek.
+function linkifyBibleReferenceBeforeCursor() {
+  const selection = window.getSelection()
+  if (!selection || !selection.isCollapsed) return
+  const node = selection.anchorNode
+  if (!node || node.nodeType !== Node.TEXT_NODE) return
+
+  const offset = selection.anchorOffset
+  const match = matchBibleReferenceAtEnd(node.textContent.slice(0, offset))
+  if (!match) return
+
+  const range = document.createRange()
+  range.setStart(node, match.matchStart)
+  range.setEnd(node, match.matchEnd)
+  selection.removeAllRanges()
+  selection.addRange(range)
+
+  document.execCommand('createLink', false, match.url)
+
+  const after = selection.anchorNode
+  const linkEl = after?.nodeType === Node.TEXT_NODE ? after.parentElement?.closest('a') : after?.closest?.('a')
+  if (!linkEl) return
+  linkEl.target = '_blank'
+  linkEl.rel = 'noopener noreferrer'
+  linkEl.className = 'bible-ref-link'
+
+  // Jeśli po odnośniku został jeszcze niedołączony do linku znak ")" (patrz matchBibleReferenceAtEnd),
+  // kursor musi wylądować ZA nim, nie zaraz po linku - inaczej Enter wstawiłby złamanie linii
+  // między link a jego własny nawias zamykający.
+  const trailingSibling = linkEl.nextSibling
+  const collapsedAfterLink = document.createRange()
+  if (match.hadTrailingParen && trailingSibling?.nodeType === Node.TEXT_NODE) {
+    collapsedAfterLink.setStart(trailingSibling, trailingSibling.textContent.length)
+  } else {
+    collapsedAfterLink.setStartAfter(linkEl)
+  }
+  collapsedAfterLink.collapse(true)
+  selection.removeAllRanges()
+  selection.addRange(collapsedAfterLink)
+}
+
 // Notatka z podstawowym formatowaniem (rozmiar, pogrubienie/kursywa/podkreślenie, kolor) -
 // treść trzymana jako HTML. Wykorzystuje document.execCommand: przestarzałe API, ale wciąż
 // jedyne proste, zero-zależnościowe rozwiązanie do formatowania tekstu w contentEditable,
@@ -77,6 +122,23 @@ export function RichNoteEditor({ id, html, onChange, onBlur, placeholder, onExpa
       syncedIdRef.current = id
     }
   }, [id, html])
+
+  // Natywny listener zamiast propa onBeforeInput - syntetyczne zdarzenie Reacta dla
+  // beforeinput nie przekazuje poprawnie inputType, więc trzeba podpiąć się bezpośrednio
+  // pod DOM. beforeinput (nie keydown) wybrany dlatego, że na klawiaturach mobilnych Enter
+  // często nie daje wiarygodnego keydown/keyCode (obsługa IME), za to
+  // insertParagraph/insertLineBreak z beforeinput działa spójnie na Androidzie i iOS.
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const handleBeforeInput = (e) => {
+      if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') {
+        linkifyBibleReferenceBeforeCursor()
+      }
+    }
+    el.addEventListener('beforeinput', handleBeforeInput)
+    return () => el.removeEventListener('beforeinput', handleBeforeInput)
+  }, [])
 
   const exec = (command, value) => {
     ref.current?.focus()
