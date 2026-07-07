@@ -34,14 +34,8 @@ Dostępna pod: https://kajlo-dev.github.io/notesik.app/
 ## Statystyki odwiedzin (GoatCounter)
 
 W `index.html` jest wpięty [GoatCounter](https://www.goatcounter.com/) — liczy odwiedziny bez
-cookies, więc nie wymaga bannera zgody. Żeby zacząć zbierać dane:
-
-1. Załóż darmowe konto na https://www.goatcounter.com/ (podajesz tylko nazwę strony, np.
-   `notesik-app` — to będzie Twój kod).
-2. W `index.html` podmień `notesik-app` w `data-goatcounter="https://notesik-app.goatcounter.com/count"`
-   na kod, który dostaniesz przy rejestracji.
-3. Statystyki (liczba odwiedzin, urządzenia, kraje) są widoczne po zalogowaniu na
-   `https://<twój-kod>.goatcounter.com`.
+cookies, więc nie wymaga bannera zgody. Statystyki (liczba odwiedzin, urządzenia, kraje) są
+widoczne po zalogowaniu na https://notesik.goatcounter.com.
 
 ## Rozwój lokalny
 
