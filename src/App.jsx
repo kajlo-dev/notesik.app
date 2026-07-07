@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useIsMobile } from './lib/useIsMobile'
 import { getSettings, saveSettings } from './lib/db'
+import { CHANGELOG_VERSION } from './lib/changelog'
 import { DesktopBlock } from './components/DesktopBlock'
 import { BottomNav } from './components/BottomNav'
 import { OnboardingModal } from './components/OnboardingModal'
+import { WhatsNewModal } from './components/WhatsNewModal'
 import { ProgramPage } from './pages/ProgramPage'
 import { ListPage } from './pages/ListPage'
 import { SearchPage } from './pages/SearchPage'
@@ -23,12 +25,17 @@ function App() {
   const [tab, setTab] = useState('program')
   const [focusItemId, setFocusItemId] = useState(null)
   const [showHelp, setShowHelp] = useState(false)
+  const [showWhatsNew, setShowWhatsNew] = useState(false)
   const [textSize, setTextSize] = useState('medium')
 
   useEffect(() => {
     getSettings().then((settings) => {
-      if (!settings.hasSeenOnboarding) setShowHelp(true)
       setTextSize(settings.textSize || 'medium')
+      if (!settings.hasSeenOnboarding) {
+        setShowHelp(true)
+      } else if ((settings.lastSeenChangelogVersion || 0) < CHANGELOG_VERSION) {
+        setShowWhatsNew(true)
+      }
     })
   }, [])
 
@@ -43,8 +50,16 @@ function App() {
     setShowHelp(false)
     if (dontShowAgain) {
       const settings = await getSettings()
-      await saveSettings({ ...settings, hasSeenOnboarding: true })
+      // Instruktaż już pokazuje aktualny stan appki - nie ma sensu zaraz potem dokładać
+      // "co nowego" o zmianach sprzed pierwszego uruchomienia.
+      await saveSettings({ ...settings, hasSeenOnboarding: true, lastSeenChangelogVersion: CHANGELOG_VERSION })
     }
+  }
+
+  const closeWhatsNew = async () => {
+    setShowWhatsNew(false)
+    const settings = await getSettings()
+    await saveSettings({ ...settings, lastSeenChangelogVersion: CHANGELOG_VERSION })
   }
 
   const handleTextSizeChange = async (size) => {
@@ -74,13 +89,14 @@ function App() {
         <Page
           onNavigate={navigate}
           onShowHelp={() => setShowHelp(true)}
+          onShowWhatsNew={() => setShowWhatsNew(true)}
           focusItemId={tab === 'program' ? focusItemId : null}
           textSize={textSize}
           onTextSizeChange={handleTextSizeChange}
         />
       </div>
       <BottomNav active={tab} onChange={handleTabChange} />
-      {showHelp && <OnboardingModal onClose={closeHelp} />}
+      {showHelp ? <OnboardingModal onClose={closeHelp} /> : showWhatsNew ? <WhatsNewModal onClose={closeWhatsNew} /> : null}
     </div>
   )
 }
