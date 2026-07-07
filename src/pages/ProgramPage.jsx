@@ -4,42 +4,9 @@ import { useAutosave } from '../lib/autosave'
 import { isNonNoteItem, getItemCategory } from '../lib/itemCategory'
 import { matchQuestionsToItems } from '../lib/reviewQuestions'
 import { saveProgramBackup, hasUnsavedBackup, formatMinutesAgo } from '../lib/backupExport'
+import { buildNotesMap, mergeNotesIntoProgram } from '../lib/notesModel'
 import { RichNoteEditor, RichNoteFullscreen } from '../components/RichNoteEditor'
 import { CloseIcon } from '../components/icons/icons'
-
-function buildNotesMap(program) {
-  const map = {}
-  if (!program) return map
-  for (const day of program.days) {
-    for (const section of day.sections) {
-      for (const item of section.items) {
-        map[item.id] = item.note || ''
-        for (const sub of item.subitems) map[sub.id] = sub.note || ''
-      }
-    }
-  }
-  for (const q of program.reviewQuestions || []) map[q.id] = q.note || ''
-  return map
-}
-
-function mergeNotesIntoProgram(program, notes) {
-  return {
-    ...program,
-    days: program.days.map((day) => ({
-      ...day,
-      sections: day.sections.map((section) => ({
-        ...section,
-        items: section.items.map((item) => ({
-          ...item,
-          note: notes[item.id] ?? item.note ?? '',
-          subitems: item.subitems.map((sub) => ({ ...sub, note: notes[sub.id] ?? sub.note ?? '' })),
-        })),
-      })),
-    })),
-    reviewQuestions: (program.reviewQuestions || []).map((q) => ({ ...q, note: notes[q.id] ?? q.note ?? '' })),
-    updatedAt: new Date().toISOString(),
-  }
-}
 
 const CATEGORY_CLASS = {
   przemowienie: 'item-przemowienie',

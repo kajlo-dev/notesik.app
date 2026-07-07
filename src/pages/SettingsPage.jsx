@@ -5,7 +5,7 @@ import { CloudDownloadIcon, UploadFileIcon } from '../components/icons/icons'
 import { ProgramThumb } from '../components/ProgramThumb'
 import { CoffeeBanner } from '../components/CoffeeBanner'
 
-const INTERVAL_OPTIONS = [1, 2, 5]
+const INTERVAL_OPTIONS = [1, 2, 5, 10]
 
 export function SettingsPage({ onNavigate, onShowHelp }) {
   const [available, setAvailable] = useState([])

@@ -149,6 +149,30 @@ body {
   flex: 1 1 auto;
 }
 
+.version-history {
+  margin-top: 6px;
+}
+
+.version-history summary {
+  color: var(--notesik-primary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  list-style: none;
+}
+.version-history summary::-webkit-details-marker {
+  display: none;
+}
+.version-history summary::before {
+  content: '▸ ';
+}
+.version-history[open] summary::before {
+  content: '▾ ';
+}
+
+.version-history ul {
+  padding-left: 14px;
+}
+
 .item-przemowienie {
   border-left: 4px solid var(--notesik-talk);
 }

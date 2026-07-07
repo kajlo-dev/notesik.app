@@ -30,6 +30,7 @@ async function importParsedProgram(parsed, { pubCode, thumbUrl } = {}) {
     reviewQuestions: parsed.reviewQuestions || [],
     thumbUrl: thumbUrl || null,
     lastBackupAt: null,
+    versions: [],
     createdAt: now,
     updatedAt: now,
   }
