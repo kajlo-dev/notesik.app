@@ -1,23 +1,66 @@
 # Notesik.app
 
-Mobilna aplikacja (PWA) do robienia notatek podczas kongresów i zgromadzeń obwodowych
-Świadków Jehowy. Działa lokalnie na telefonie/tablecie (bez logowania, bez backendu) —
-program pobiera się jako PDF i zamienia na notatnik z polami do wpisywania notatek przy
-każdym punkcie programu.
+Notesik.app to prosta aplikacja mobilna do robienia notatek podczas kongresów i zgromadzeń
+obwodowych Świadków Jehowy. Pobierasz program w PDF, aplikacja sama zamienia go w notatnik
+z osobnym polem na notatkę przy każdym punkcie programu — nie trzeba niczego przepisywać ręcznie.
 
-Dostępna pod: https://kajlo-dev.github.io/notesik.app/
+**Otwórz aplikację:** https://kajlo-dev.github.io/notesik.app/
 
-## Funkcje
+> Działa tylko na telefonie i tablecie. Na komputerze pokaże się komunikat blokujący —
+> to celowe, aplikacja jest zaprojektowana pod ekran dotykowy.
 
-- **Program** — aktywny program z polami na notatki, z auto-zapisem co 1/2/5 min (do wyboru).
-- **Lista** — wszystkie pobrane programy, możliwość powrotu do nich, usunięcia i eksportu
-  notatek do jednego pliku PDF ("kartki notesika" do wpięcia w skoroszyt).
-- **Ustawienia** — pobieranie programu z aktualnej listy (zsynchronizowanej z jw.org) albo
-  ręczne wgranie własnego pliku PDF; wybór interwału auto-zapisu.
-- Aplikacja celowo blokuje się na dużych ekranach (komputer) — jest zaprojektowana pod telefon
-  i tablet.
+## Jak zacząć
 
-## Jak to działa technicznie
+1. Otwórz https://kajlo-dev.github.io/notesik.app/ w przeglądarce na telefonie lub tablecie.
+2. Dodaj ją do ekranu głównego, żeby korzystać z niej jak z normalnej aplikacji:
+   - **Android (Chrome):** menu (⋮) → *Dodaj do ekranu głównego*.
+   - **iPhone/iPad (Safari):** przycisk udostępniania (□↑) → *Dodaj do ekranu początkowego*.
+3. Przejdź do zakładki **Ustawienia** i pobierz program z listy (albo wgraj własny plik PDF).
+4. Program pojawi się w zakładce **Program** — gotowe do robienia notatek.
+
+Nie trzeba się logować ani zakładać konta. Wszystko działa offline i zostaje wyłącznie na
+Twoim urządzeniu.
+
+## Zakładki
+
+### 📝 Program
+
+Strona główna. Pokazuje aktualnie otwarty program podzielony na dni (dla kongresu: piątek,
+sobota, niedziela) i sesje (przed południem / po południu). Przy każdym punkcie programu jest
+pole tekstowe na notatkę.
+
+Notatki zapisują się automatycznie — co 1, 2 lub 5 minut (do ustawienia w Ustawieniach), a
+dodatkowo od razu po opuszczeniu pola tekstowego. Nie trzeba nic samemu zapisywać.
+
+### 📋 Lista
+
+Lista wszystkich pobranych dotąd programów — z notatkami albo bez. Stąd można:
+- **otworzyć** dowolny program ponownie, żeby coś dopisać lub poprawić,
+- **usunąć** program razem z notatkami,
+- **wyeksportować** notatki do jednego pliku PDF — gotowego do wydrukowania i wpięcia jako
+  kartki do skoroszytu.
+
+### ⚙️ Ustawienia
+
+- **Pobierz program** — lista aktualnych programów kongresów i zgromadzeń, zsynchronizowana
+  na bieżąco z jw.org. Wystarczy kliknąć, żeby pobrać i od razu zacząć robić notatki.
+- **Wgraj plik PDF ręcznie** — jeśli potrzebnego programu nie ma jeszcze na liście, można wgrać
+  własny plik PDF pobrany skądinąd.
+- **Automatyczny zapis notatek** — wybór co ile minut (1/2/5) aplikacja ma zapisywać notatki
+  w tle.
+
+## Prywatność
+
+- Aplikacja nie wymaga konta ani logowania.
+- Programy i notatki są zapisywane wyłącznie lokalnie na urządzeniu (w pamięci przeglądarki) —
+  nigdzie nie są wysyłane.
+- Liczba odwiedzin jest zliczana anonimowo przez [GoatCounter](https://www.goatcounter.com/),
+  bez plików cookie i bez zbierania danych osobowych — dlatego nie ma bannera zgody.
+
+## Dla deweloperów
+
+<details>
+<summary>Szczegóły techniczne i uruchomienie lokalne</summary>
 
 - **React + Vite**, dane trzymane lokalnie w IndexedDB (`idb`), bez żadnego backendu.
 - Parser `src/lib/pdfParser.js` (na bazie `pdfjs-dist`) zamienia PDF programu na strukturę
@@ -31,21 +74,17 @@ Dostępna pod: https://kajlo-dev.github.io/notesik.app/
 - `.github/workflows/deploy.yml` buduje i publikuje aplikację na GitHub Pages przy każdym pushu
   do `main`.
 
-## Statystyki odwiedzin (GoatCounter)
-
-W `index.html` jest wpięty [GoatCounter](https://www.goatcounter.com/) — liczy odwiedziny bez
-cookies, więc nie wymaga bannera zgody. Statystyki (liczba odwiedzin, urządzenia, kraje) są
-widoczne po zalogowaniu na https://notesik.goatcounter.com.
-
-## Rozwój lokalny
+### Uruchomienie lokalne
 
 ```bash
 npm install
 npm run dev
 ```
 
-Żeby ręcznie odświeżyć listę programów lokalnie:
+Ręczne odświeżenie listy programów:
 
 ```bash
 node scripts/sync-programs.mjs
 ```
+
+</details>
