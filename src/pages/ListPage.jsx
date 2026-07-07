@@ -1,20 +1,17 @@
 import { useEffect, useState } from 'react'
 import { listPrograms, deleteProgram, getSettings, saveSettings } from '../lib/db'
 import { exportProgramNotesToPdf } from '../lib/pdfExport'
+import { hasNoteContent } from '../lib/richText'
 import { DeleteIcon, DownloadIcon, ChevronRightIcon } from '../components/icons/icons'
-
-function hasText(value) {
-  return Boolean(value && value.trim())
-}
 
 function programHasNotes(program) {
   const inDays = program.days.some((day) =>
     day.sections.some((section) =>
-      section.items.some((item) => hasText(item.note) || item.subitems.some((s) => hasText(s.note))),
+      section.items.some((item) => hasNoteContent(item.note) || item.subitems.some((s) => hasNoteContent(s.note))),
     ),
   )
   if (inDays) return true
-  return (program.reviewQuestions || []).some((q) => hasText(q.note))
+  return (program.reviewQuestions || []).some((q) => hasNoteContent(q.note))
 }
 
 function formatDate(iso) {

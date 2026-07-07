@@ -3,6 +3,7 @@ import { getSettings, getProgram, saveProgram } from '../lib/db'
 import { useAutosave } from '../lib/autosave'
 import { isNonNoteItem, getItemCategory } from '../lib/itemCategory'
 import { matchQuestionsToItems } from '../lib/reviewQuestions'
+import { RichNoteEditor, RichNoteFullscreen } from '../components/RichNoteEditor'
 
 function buildNotesMap(program) {
   const map = {}
@@ -80,20 +81,17 @@ function SimpleRow({ item }) {
   )
 }
 
-function NoteField({ id, note, onChange, onBlur, placeholder = 'Twoja notatka…' }) {
-  return (
-    <textarea
-      className="form-control form-control-sm mt-2"
-      rows={2}
-      placeholder={placeholder}
-      value={note}
-      onChange={(e) => onChange(id, e.target.value)}
-      onBlur={onBlur}
-    />
-  )
+// Gdy notatka jest otwarta w trybie pełnoekranowym, karta w tym miejscu NIE renderuje
+// własnej kopii edytora (dwie równoległe instancje contentEditable dla tego samego id
+// rozjeżdżałyby się ze sobą) - pokazuje tylko przycisk powrotu.
+function NoteSlot({ id, html, notesMode, onChange, onBlur, onExpand, placeholder }) {
+  if (notesMode.expandedId === id) {
+    return <div className="text-secondary small fst-italic mt-2">Notatka otwarta w pełnym ekranie…</div>
+  }
+  return <RichNoteEditor id={id} html={html} onChange={onChange} onBlur={onBlur} placeholder={placeholder} onExpand={() => onExpand(id)} />
 }
 
-function SymposiumCard({ item, questionId, notes, onChange, onBlur }) {
+function SymposiumCard({ item, questionId, notes, notesMode, onChange, onBlur, onExpand }) {
   return (
     <div className="card mb-3 program-item-card item-sympozjum">
       <div className="card-body">
@@ -106,7 +104,14 @@ function SymposiumCard({ item, questionId, notes, onChange, onBlur }) {
                 {i + 1}. {sub.text}
                 {sub.reference && <span className="text-secondary fw-normal"> ({sub.reference})</span>}
               </p>
-              <NoteField id={sub.id} note={notes[sub.id] ?? ''} onChange={onChange} onBlur={onBlur} />
+              <NoteSlot
+                id={sub.id}
+                html={notes[sub.id] ?? ''}
+                notesMode={notesMode}
+                onChange={onChange}
+                onBlur={onBlur}
+                onExpand={(id) => onExpand(id, `${item.title} — ${sub.text}`)}
+              />
             </div>
           ))}
         </div>
@@ -115,7 +120,7 @@ function SymposiumCard({ item, questionId, notes, onChange, onBlur }) {
   )
 }
 
-function ProgramItem({ item, questionId, note, onChange, onBlur }) {
+function ProgramItem({ item, questionId, note, notesMode, onChange, onBlur, onExpand }) {
   const category = getItemCategory(item)
   return (
     <div className={`card mb-3 program-item-card ${CATEGORY_CLASS[category] || ''}`}>
@@ -132,13 +137,20 @@ function ProgramItem({ item, questionId, note, onChange, onBlur }) {
             ))}
           </ul>
         )}
-        <NoteField id={item.id} note={note} onChange={onChange} onBlur={onBlur} />
+        <NoteSlot
+          id={item.id}
+          html={note}
+          notesMode={notesMode}
+          onChange={onChange}
+          onBlur={onBlur}
+          onExpand={(id) => onExpand(id, item.title)}
+        />
       </div>
     </div>
   )
 }
 
-function ReviewQuestions({ questions, notes, onChange, onBlur }) {
+function ReviewQuestions({ questions, notes, notesMode, onChange, onBlur, onExpand }) {
   if (!questions || questions.length === 0) return null
   return (
     <div className="mb-4">
@@ -150,7 +162,15 @@ function ReviewQuestions({ questions, notes, onChange, onBlur }) {
               <span className="fw-semibold">{q.number}.</span> {q.text}
               {q.reference && <span className="text-secondary"> ({q.reference})</span>}
             </p>
-            <NoteField id={q.id} note={notes[q.id] ?? ''} onChange={onChange} onBlur={onBlur} placeholder="Twoja odpowiedź…" />
+            <NoteSlot
+              id={q.id}
+              html={notes[q.id] ?? ''}
+              notesMode={notesMode}
+              onChange={onChange}
+              onBlur={onBlur}
+              placeholder="Twoja odpowiedź…"
+              onExpand={(id) => onExpand(id, `Pytanie ${q.number}`)}
+            />
           </div>
         </div>
       ))}
@@ -164,6 +184,7 @@ export function ProgramPage({ onNavigate }) {
   const [autosaveMinutes, setAutosaveMinutes] = useState(2)
   const [activeDayIndex, setActiveDayIndex] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [expandedNote, setExpandedNote] = useState(null)
   const notesRef = useRef(notes)
   notesRef.current = notes
 
@@ -212,6 +233,11 @@ export function ProgramPage({ onNavigate }) {
     setNotes((prev) => ({ ...prev, [id]: value }))
   }
   const handleBlur = () => persist(notesRef.current)
+  const handleExpand = (id, label) => setExpandedNote({ id, label })
+  const handleCloseExpand = () => {
+    persist(notesRef.current)
+    setExpandedNote(null)
+  }
 
   if (loading) {
     return <div className="p-4 text-center text-secondary">Wczytywanie…</div>
@@ -229,6 +255,7 @@ export function ProgramPage({ onNavigate }) {
   }
 
   const day = program.days[activeDayIndex] || program.days[0]
+  const notesMode = { expandedId: expandedNote?.id ?? null }
 
   return (
     <div>
@@ -261,8 +288,10 @@ export function ProgramPage({ onNavigate }) {
                   item={item}
                   questionId={questionByItemId[item.id]}
                   notes={notes}
+                  notesMode={notesMode}
                   onChange={handleNoteChange}
                   onBlur={handleBlur}
+                  onExpand={handleExpand}
                 />
               ) : (
                 <ProgramItem
@@ -270,8 +299,10 @@ export function ProgramPage({ onNavigate }) {
                   item={item}
                   questionId={questionByItemId[item.id]}
                   note={notes[item.id] ?? ''}
+                  notesMode={notesMode}
                   onChange={handleNoteChange}
                   onBlur={handleBlur}
+                  onExpand={handleExpand}
                 />
               ),
             )}
@@ -280,10 +311,22 @@ export function ProgramPage({ onNavigate }) {
         <ReviewQuestions
           questions={program.reviewQuestions}
           notes={notes}
+          notesMode={notesMode}
           onChange={handleNoteChange}
           onBlur={handleBlur}
+          onExpand={handleExpand}
         />
       </div>
+      {expandedNote && (
+        <RichNoteFullscreen
+          id={expandedNote.id}
+          html={notes[expandedNote.id] ?? ''}
+          onChange={handleNoteChange}
+          onBlur={handleBlur}
+          placeholder={expandedNote.label}
+          onClose={handleCloseExpand}
+        />
+      )}
     </div>
   )
 }

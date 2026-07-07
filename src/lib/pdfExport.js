@@ -1,7 +1,10 @@
 import { jsPDF } from 'jspdf'
 import robotoRegularUrl from '../assets/fonts/Roboto-Regular.ttf?url'
 import robotoBoldUrl from '../assets/fonts/Roboto-Bold.ttf?url'
+import robotoItalicUrl from '../assets/fonts/Roboto-Italic.ttf?url'
+import robotoBoldItalicUrl from '../assets/fonts/Roboto-BoldItalic.ttf?url'
 import { isNonNoteItem } from './itemCategory'
+import { parseHtmlToRuns, hasNoteContent } from './richText'
 
 const MARGIN = 15
 const LINE_HEIGHT = 6
@@ -19,14 +22,24 @@ function arrayBufferToBase64(buffer) {
 // Standardowe fonty jsPDF (Helvetica itp.) nie obsługują polskich znaków diakrytycznych
 // (ą, ć, ę, ł, ń, ó, ś, ź, ż) - trzeba osadzić font z pełnym pokryciem Latin Extended-A.
 async function registerPolishFont(doc) {
-  const [regularBuf, boldBuf] = await Promise.all([
-    fetch(robotoRegularUrl).then((r) => r.arrayBuffer()),
-    fetch(robotoBoldUrl).then((r) => r.arrayBuffer()),
-  ])
-  doc.addFileToVFS('Roboto-Regular.ttf', arrayBufferToBase64(regularBuf))
-  doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
-  doc.addFileToVFS('Roboto-Bold.ttf', arrayBufferToBase64(boldBuf))
-  doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold')
+  const variants = [
+    ['normal', robotoRegularUrl, 'Roboto-Regular.ttf'],
+    ['bold', robotoBoldUrl, 'Roboto-Bold.ttf'],
+    ['italic', robotoItalicUrl, 'Roboto-Italic.ttf'],
+    ['bolditalic', robotoBoldItalicUrl, 'Roboto-BoldItalic.ttf'],
+  ]
+  const buffers = await Promise.all(variants.map(([, url]) => fetch(url).then((r) => r.arrayBuffer())))
+  variants.forEach(([style, , fileName], i) => {
+    doc.addFileToVFS(fileName, arrayBufferToBase64(buffers[i]))
+    doc.addFont(fileName, 'Roboto', style)
+  })
+}
+
+function fontStyleFor(run) {
+  if (run.bold && run.italic) return 'bolditalic'
+  if (run.bold) return 'bold'
+  if (run.italic) return 'italic'
+  return 'normal'
 }
 
 class PdfCursor {
@@ -59,13 +72,53 @@ class PdfCursor {
     this.y += gapAfter
   }
 
-  note(value, placeholder) {
-    const trimmed = (value || '').trim()
-    if (trimmed) {
-      this.text(trimmed, { gapAfter: 3 })
-    } else {
+  // Renderuje HTML notatki (z RichNoteEditor) zachowując pogrubienie/kursywę/podkreślenie/
+  // kolor - każdy "przebieg" tekstu o innym stylu trzeba układać i mierzyć osobno, bo jsPDF
+  // nie ma wbudowanego układania mieszanego formatowania w jednym akapicie.
+  richNote(html, placeholder) {
+    if (!hasNoteContent(html)) {
       this.text(placeholder, { gapAfter: 3, color: 150 })
+      return
     }
+    const runs = parseHtmlToRuns(html)
+    const paragraphs = [[]]
+    for (const run of runs) {
+      const parts = run.text.split('\n')
+      parts.forEach((part, i) => {
+        if (i > 0) paragraphs.push([])
+        if (part) paragraphs[paragraphs.length - 1].push({ ...run, text: part })
+      })
+    }
+
+    const size = 10
+    for (const paragraph of paragraphs) {
+      if (paragraph.length === 0) continue
+      let x = MARGIN
+      this.ensureSpace(LINE_HEIGHT)
+      for (const run of paragraph) {
+        const font = fontStyleFor(run)
+        this.doc.setFont('Roboto', font)
+        this.doc.setFontSize(run.sizePt || size)
+        this.doc.setTextColor(run.color || 0)
+        const words = run.text.split(/(\s+)/).filter((w) => w.length > 0)
+        for (const word of words) {
+          const wordWidth = this.doc.getTextWidth(word)
+          if (x + wordWidth > MARGIN + this.maxWidth && word.trim()) {
+            x = MARGIN
+            this.y += LINE_HEIGHT
+            this.ensureSpace(LINE_HEIGHT)
+          }
+          this.doc.text(word, x, this.y)
+          if (run.underline && word.trim()) {
+            this.doc.line(x, this.y + 0.8, x + wordWidth, this.y + 0.8)
+          }
+          x += wordWidth
+        }
+      }
+      this.doc.setTextColor(0)
+      this.y += LINE_HEIGHT
+    }
+    this.y += 3
   }
 }
 
@@ -95,10 +148,10 @@ export async function exportProgramNotesToPdf(program) {
         if (item.subitems.length > 0) {
           item.subitems.forEach((sub, i) => {
             cursor.text(`${i + 1}. ${sub.text}`, { font: 'bold', size: 10 })
-            cursor.note(sub.note, '(brak notatki)')
+            cursor.richNote(sub.note, '(brak notatki)')
           })
         } else {
-          cursor.note(item.note, '(brak notatki)')
+          cursor.richNote(item.note, '(brak notatki)')
         }
       }
     }
@@ -110,7 +163,7 @@ export async function exportProgramNotesToPdf(program) {
     for (const q of program.reviewQuestions) {
       cursor.ensureSpace(14)
       cursor.text(`${q.number}. ${q.text}`, { font: 'bold', size: 11 })
-      cursor.note(q.note, '(brak odpowiedzi)')
+      cursor.richNote(q.note, '(brak odpowiedzi)')
     }
   }
 
