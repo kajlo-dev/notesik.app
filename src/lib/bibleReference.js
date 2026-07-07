@@ -9,16 +9,33 @@ function normalize(s) {
 }
 
 const variantToBookNum = new Map()
-const variants = []
+const variantSet = new Set()
+function addVariant(text, bookNum) {
+  variantSet.add(text)
+  variantToBookNum.set(normalize(text), bookNum)
+}
 for (const book of BIBLE_BOOKS) {
   for (const text of [book.full, book.long, book.abbr, ...(book.extra || [])]) {
-    variants.push(text)
-    variantToBookNum.set(normalize(text), book.num)
+    addVariant(text, book.num)
+    // Oficjalne "długie" skróty jw.org kończą się kropką (np. "Rodz.", "Nehem.") - wielu
+    // użytkowników i tak jej nie wpisze (zwłaszcza na klawiaturze mobilnej), więc dokładamy
+    // wariant bez żadnych kropek jako osobną, dodatkową opcję.
+    if (text.includes('.')) {
+      addVariant(text.replace(/\./g, '').replace(/\s+/g, ' ').trim(), book.num)
+    }
   }
+}
+// Księgi numerowane (np. "1 Sam.", "1 Jana") - wiele osób i tak wpisze numer bez spacji
+// ("1Sam", "1Jana"), więc dla każdego dotychczasowego wariantu zaczynającego się od "N "
+// dokładamy też wersję z numerem zlepionym ze słowem. Osobny przebieg PO zbudowaniu
+// wszystkich wariantów - inaczej łatwo pomylić numer księgi przy iterowaniu w trakcie budowy.
+for (const [text, bookNum] of [...variantSet].map((t) => [t, variantToBookNum.get(normalize(t))])) {
+  const glued = text.match(/^([123])\s+(\S.*)$/)
+  if (glued) addVariant(glued[1] + glued[2], bookNum)
 }
 // Najdłuższe warianty pierwsze - m.in. żeby "1 Jana" (numer 62) miało pierwszeństwo przed samym
 // "Jana" (numer 43) tam, gdzie oba mogłyby pasować.
-variants.sort((a, b) => b.length - a.length)
+const variants = [...variantSet].sort((a, b) => b.length - a.length)
 
 const BOOK_ALTERNATION = variants.map(escapeRegex).join('|')
 // Odnośnik musi zaczynać się na początku tekstu, po spacji albo po "(" (tak jak w programach
