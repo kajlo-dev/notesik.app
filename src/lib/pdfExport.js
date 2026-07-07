@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf'
 import robotoRegularUrl from '../assets/fonts/Roboto-Regular.ttf?url'
 import robotoBoldUrl from '../assets/fonts/Roboto-Bold.ttf?url'
+import { isNonNoteItem } from './itemCategory'
 
 const MARGIN = 15
 const LINE_HEIGHT = 6
@@ -28,69 +29,88 @@ async function registerPolishFont(doc) {
   doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold')
 }
 
-function addWrappedText(doc, text, x, y, maxWidth, pageHeight) {
-  const lines = doc.splitTextToSize(text, maxWidth)
-  for (const line of lines) {
-    if (y > pageHeight - MARGIN) {
-      doc.addPage()
-      y = MARGIN
-    }
-    doc.text(line, x, y)
-    y += LINE_HEIGHT
+class PdfCursor {
+  constructor(doc) {
+    this.doc = doc
+    this.pageWidth = doc.internal.pageSize.getWidth()
+    this.pageHeight = doc.internal.pageSize.getHeight()
+    this.maxWidth = this.pageWidth - MARGIN * 2
+    this.y = MARGIN
   }
-  return y
+
+  ensureSpace(minHeight) {
+    if (this.y > this.pageHeight - MARGIN - minHeight) {
+      this.doc.addPage()
+      this.y = MARGIN
+    }
+  }
+
+  text(value, { font = 'normal', size = 10, gapAfter = 0, color = 0 } = {}) {
+    this.doc.setFont('Roboto', font)
+    this.doc.setFontSize(size)
+    this.doc.setTextColor(color)
+    const lines = this.doc.splitTextToSize(value, this.maxWidth)
+    for (const line of lines) {
+      this.ensureSpace(LINE_HEIGHT)
+      this.doc.text(line, MARGIN, this.y)
+      this.y += LINE_HEIGHT
+    }
+    this.doc.setTextColor(0)
+    this.y += gapAfter
+  }
+
+  note(value, placeholder) {
+    const trimmed = (value || '').trim()
+    if (trimmed) {
+      this.text(trimmed, { gapAfter: 3 })
+    } else {
+      this.text(placeholder, { gapAfter: 3, color: 150 })
+    }
+  }
 }
 
 // Eksportuje notatki programu jako jeden ciągły dokument PDF, w kolejności programu -
-// punkt programu (godzina + tytuł) jako nagłówek, notatka użytkownika pod spodem.
+// punkt programu (godzina + tytuł) jako nagłówek, notatka użytkownika pod spodem. Pieśni,
+// muzyka i modlitwy są pomijane (nie mają pola notatki w aplikacji).
 export async function exportProgramNotesToPdf(program) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
   await registerPolishFont(doc)
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
-  const maxWidth = pageWidth - MARGIN * 2
-  let y = MARGIN
+  const cursor = new PdfCursor(doc)
 
-  doc.setFont('Roboto', 'bold')
-  doc.setFontSize(16)
-  y = addWrappedText(doc, program.title, MARGIN, y, maxWidth, pageHeight)
-  y += 4
+  cursor.text(program.title, { font: 'bold', size: 16, gapAfter: 4 })
 
   for (const day of program.days) {
     if (day.dayName) {
-      if (y > pageHeight - MARGIN - 10) {
-        doc.addPage()
-        y = MARGIN
-      }
-      doc.setFont('Roboto', 'bold')
-      doc.setFontSize(13)
-      y = addWrappedText(doc, day.dayName, MARGIN, y, maxWidth, pageHeight)
-      y += 2
+      cursor.ensureSpace(10)
+      cursor.text(day.dayName, { font: 'bold', size: 13, gapAfter: 2 })
     }
 
     for (const section of day.sections) {
       for (const item of section.items) {
-        const hasNote = item.note && item.note.trim().length > 0
-        if (y > pageHeight - MARGIN - 14) {
-          doc.addPage()
-          y = MARGIN
-        }
-        doc.setFont('Roboto', 'bold')
-        doc.setFontSize(11)
+        if (isNonNoteItem(item)) continue
+        cursor.ensureSpace(14)
         const heading = item.label ? `${item.time} ${item.label}: ${item.title}` : `${item.time} ${item.title}`
-        y = addWrappedText(doc, heading, MARGIN, y, maxWidth, pageHeight)
+        cursor.text(heading, { font: 'bold', size: 11 })
 
-        doc.setFont('Roboto', 'normal')
-        doc.setFontSize(10)
-        if (hasNote) {
-          y = addWrappedText(doc, item.note.trim(), MARGIN, y, maxWidth, pageHeight)
+        if (item.subitems.length > 0) {
+          item.subitems.forEach((sub, i) => {
+            cursor.text(`${i + 1}. ${sub.text}`, { font: 'bold', size: 10 })
+            cursor.note(sub.note, '(brak notatki)')
+          })
         } else {
-          doc.setTextColor(150)
-          y = addWrappedText(doc, '(brak notatki)', MARGIN, y, maxWidth, pageHeight)
-          doc.setTextColor(0)
+          cursor.note(item.note, '(brak notatki)')
         }
-        y += 3
       }
+    }
+  }
+
+  if (program.reviewQuestions && program.reviewQuestions.length > 0) {
+    cursor.ensureSpace(10)
+    cursor.text('Pytania powtórkowe', { font: 'bold', size: 13, gapAfter: 2 })
+    for (const q of program.reviewQuestions) {
+      cursor.ensureSpace(14)
+      cursor.text(`${q.number}. ${q.text}`, { font: 'bold', size: 11 })
+      cursor.note(q.note, '(brak odpowiedzi)')
     }
   }
 

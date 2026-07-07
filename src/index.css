@@ -2,9 +2,16 @@
   --notesik-primary: #1b6b57;
   --notesik-primary-dark: #114438;
   --notesik-accent: #e8a33d;
+  --notesik-talk: #2f6fed;
+  --notesik-symposium: #e8a33d;
+  --notesik-public-talk: #7c4fd1;
   --bs-primary: var(--notesik-primary);
   --bs-primary-rgb: 27, 107, 87;
   color-scheme: light dark;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html,
@@ -77,6 +84,33 @@ body {
 
 .program-item-card textarea {
   resize: vertical;
+}
+
+.program-item-card[id] {
+  scroll-margin-top: 64px;
+}
+
+.item-przemowienie {
+  border-left: 4px solid var(--notesik-talk);
+}
+.item-przemowienie .badge + span {
+  color: var(--notesik-talk);
+}
+
+.item-sympozjum {
+  border-left: 4px solid var(--notesik-symposium);
+  background: rgba(232, 163, 61, 0.06);
+}
+.item-sympozjum .badge + span {
+  color: var(--notesik-symposium);
+}
+
+.item-wyklad {
+  border-left: 4px solid var(--notesik-public-talk);
+  background: rgba(124, 79, 209, 0.07);
+}
+.item-wyklad .badge + span {
+  color: var(--notesik-public-talk);
 }
 
 .desktop-block {

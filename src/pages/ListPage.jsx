@@ -3,10 +3,18 @@ import { listPrograms, deleteProgram, getSettings, saveSettings } from '../lib/d
 import { exportProgramNotesToPdf } from '../lib/pdfExport'
 import { DeleteIcon, DownloadIcon, ChevronRightIcon } from '../components/icons/icons'
 
+function hasText(value) {
+  return Boolean(value && value.trim())
+}
+
 function programHasNotes(program) {
-  return program.days.some((day) =>
-    day.sections.some((section) => section.items.some((item) => item.note && item.note.trim())),
+  const inDays = program.days.some((day) =>
+    day.sections.some((section) =>
+      section.items.some((item) => hasText(item.note) || item.subitems.some((s) => hasText(s.note))),
+    ),
   )
+  if (inDays) return true
+  return (program.reviewQuestions || []).some((q) => hasText(q.note))
 }
 
 function formatDate(iso) {

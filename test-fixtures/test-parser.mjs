@@ -6,9 +6,10 @@ const file = process.argv[2]
 const data = new Uint8Array(fs.readFileSync(file))
 const doc = await getDocument({ data }).promise
 const meta = await doc.getMetadata()
-const { days, type } = await extractDaysFromDoc(doc)
+const { days, questions, type } = await extractDaysFromDoc(doc)
 
 console.log('title:', meta?.info?.Title)
 console.log('type:', type)
 console.log('days:', days.length)
-console.log(JSON.stringify(days, null, 2))
+console.log('questions:', questions.length)
+console.log(JSON.stringify({ days, questions }, null, 2))

@@ -18,11 +18,12 @@ export async function parsePdfFile(source, { titleHint } = {}) {
     }
   }
 
-  const { days, type } = await extractDaysFromDoc(doc)
+  const { days, questions, type } = await extractDaysFromDoc(doc)
 
   return {
     title: title || (type === 'kongres' ? 'Program kongresu' : 'Program zgromadzenia'),
     type,
     days,
+    reviewQuestions: questions,
   }
 }

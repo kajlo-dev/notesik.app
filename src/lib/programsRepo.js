@@ -22,6 +22,7 @@ async function importParsedProgram(parsed, { pubCode } = {}) {
     title: parsed.title,
     type: parsed.type,
     days: parsed.days,
+    reviewQuestions: parsed.reviewQuestions || [],
     createdAt: now,
     updatedAt: now,
   }
