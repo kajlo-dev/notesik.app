@@ -360,6 +360,12 @@ body {
   filter: brightness(1.08);
 }
 
+.bible-ref-link {
+  color: var(--notesik-talk);
+  text-decoration: underline;
+  font-weight: 700;
+}
+
 .search-results-table td {
   cursor: pointer;
 }
