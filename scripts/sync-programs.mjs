@@ -6,6 +6,7 @@
 // skrypt działa poza przeglądarką (w GitHub Actions), więc CORS go nie dotyczy, i zapisuje
 // PDF-y do repozytorium, skąd serwuje je GitHub Pages jako pliki tego samego pochodzenia.
 import fs from 'node:fs/promises'
+import { renderPdfThumbnail } from './renderThumbnail.mjs'
 
 const LIST_URL = 'https://www.jw.org/pl/biblioteka/programy/'
 const API_URL = 'https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS'
@@ -61,14 +62,23 @@ async function main() {
     }
     const buffer = Buffer.from(await pdfRes.arrayBuffer())
     await fs.writeFile(new URL(fileName, OUT_DIR), buffer)
+
+    let thumbFile = null
+    const thumbBuffer = await renderPdfThumbnail(new Uint8Array(buffer))
+    if (thumbBuffer) {
+      thumbFile = `${info.pub}_thumb.jpg`
+      await fs.writeFile(new URL(thumbFile, OUT_DIR), thumbBuffer)
+    }
+
     index.push({
       pub: info.pub,
       title: info.title,
       type: classify(pub),
       file: `programs/${fileName}`,
+      thumb: thumbFile ? `programs/${thumbFile}` : null,
       modifiedDatetime: info.modifiedDatetime,
     })
-    console.log(`OK: ${info.pub} - ${info.title}`)
+    console.log(`OK: ${info.pub} - ${info.title}${thumbFile ? '' : ' (bez miniaturki)'}`)
   }
 
   index.sort((a, b) => (b.modifiedDatetime || '').localeCompare(a.modifiedDatetime || ''))

@@ -61,9 +61,9 @@ function TitleWithQuestionLink({ item, questionId }) {
       {item.reference && <span className="text-secondary"> ({item.reference})</span>}
     </>
   )
-  if (!questionId) return <p className="mb-1">{title}</p>
+  if (!questionId) return <p className="mb-1 item-title">{title}</p>
   return (
-    <p className="mb-1">
+    <p className="mb-1 item-title">
       <a href={`#pytanie-${questionId}`} className="link-offset-2">
         {title}
       </a>{' '}
@@ -76,7 +76,7 @@ function SimpleRow({ item }) {
   return (
     <div className="d-flex align-items-center gap-2 py-2 px-1 text-secondary small border-bottom">
       <span className="badge text-bg-light border">{item.time}</span>
-      <span>{item.title}</span>
+      <span className="simple-row-text">{item.title}</span>
     </div>
   )
 }
@@ -100,7 +100,7 @@ function SymposiumCard({ item, questionId, notes, notesMode, onChange, onBlur, o
         <div className="ps-3 border-start border-2 mt-2">
           {item.subitems.map((sub, i) => (
             <div key={sub.id} className={i > 0 ? 'mt-3' : ''}>
-              <p className="mb-1 fw-medium">
+              <p className="mb-1 fw-medium symposium-subitem-text">
                 {i + 1}. {sub.text}
                 {sub.reference && <span className="text-secondary fw-normal"> ({sub.reference})</span>}
               </p>

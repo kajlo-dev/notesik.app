@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { getSettings, saveSettings } from '../lib/db'
 import { fetchAvailablePrograms, downloadAndImportProgram, importProgramFromFile } from '../lib/programsRepo'
 import { CloudDownloadIcon, UploadFileIcon } from '../components/icons/icons'
+import { ProgramThumb } from '../components/ProgramThumb'
+import { CoffeeBanner } from '../components/CoffeeBanner'
 
 const INTERVAL_OPTIONS = [1, 2, 5]
 
-export function SettingsPage({ onNavigate }) {
+export function SettingsPage({ onNavigate, onShowHelp }) {
   const [available, setAvailable] = useState([])
   const [loadingAvailable, setLoadingAvailable] = useState(true)
   const [downloadingPub, setDownloadingPub] = useState(null)
@@ -60,79 +62,93 @@ export function SettingsPage({ onNavigate }) {
   }
 
   return (
-    <div className="p-3">
-      <h1 className="h6 text-secondary mb-3">Ustawienia</h1>
+    <div>
+      <CoffeeBanner />
+      <div className="p-3">
+        <h1 className="h6 text-secondary mb-3">Ustawienia</h1>
 
-      {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
+        {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
-      <section className="mb-4">
-        <h2 className="h6">Pobierz program</h2>
-        {loadingAvailable ? (
-          <p className="text-secondary small">Wczytywanie listy…</p>
-        ) : available.length === 0 ? (
-          <p className="text-secondary small">
-            Lista programów jest jeszcze pusta. Spróbuj wgrać plik PDF ręcznie poniżej.
+        <section className="mb-4">
+          <h2 className="h6">Pobierz program</h2>
+          {loadingAvailable ? (
+            <p className="text-secondary small">Wczytywanie listy…</p>
+          ) : available.length === 0 ? (
+            <p className="text-secondary small">
+              Lista programów jest jeszcze pusta. Spróbuj wgrać plik PDF ręcznie poniżej.
+            </p>
+          ) : (
+            <ul className="list-group mb-2">
+              {available.map((entry) => (
+                <li key={entry.pub} className="list-group-item program-row">
+                  <ProgramThumb src={entry.thumbUrl} alt="" />
+                  <div className="program-row-name">
+                    <div className="fw-semibold">{entry.title}</div>
+                    <div className="small text-secondary">{entry.type === 'kongres' ? 'Kongres' : 'Zgromadzenie'}</div>
+                  </div>
+                  <div className="program-row-actions">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary"
+                      disabled={downloadingPub === entry.pub}
+                      onClick={() => handleDownload(entry)}
+                      aria-label="Pobierz"
+                    >
+                      {downloadingPub === entry.pub ? '…' : <CloudDownloadIcon size={18} />}
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="mb-4">
+          <h2 className="h6">Wgraj plik PDF ręcznie</h2>
+          <p className="small text-secondary">
+            Jeśli programu nie ma na liście powyżej, możesz wgrać pobrany wcześniej plik PDF.
           </p>
-        ) : (
-          <ul className="list-group mb-2">
-            {available.map((entry) => (
-              <li key={entry.pub} className="list-group-item d-flex justify-content-between align-items-center gap-2">
-                <div>
-                  <div className="fw-semibold">{entry.title}</div>
-                  <div className="small text-secondary">{entry.type === 'kongres' ? 'Kongres' : 'Zgromadzenie'}</div>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-primary"
-                  disabled={downloadingPub === entry.pub}
-                  onClick={() => handleDownload(entry)}
-                >
-                  {downloadingPub === entry.pub ? 'Pobieranie…' : <CloudDownloadIcon size={18} />}
-                </button>
-              </li>
+          <button
+            type="button"
+            className="btn btn-outline-primary"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <UploadFileIcon size={18} className="me-2" />
+            {uploading ? 'Wczytywanie…' : 'Wybierz plik PDF'}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            className="d-none"
+            onChange={handleFileUpload}
+          />
+        </section>
+
+        <section className="mb-4">
+          <h2 className="h6">Automatyczny zapis notatek</h2>
+          <div className="btn-group" role="group">
+            {INTERVAL_OPTIONS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={`btn btn-sm ${autosaveMinutes === m ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => handleIntervalChange(m)}
+              >
+                co {m} min
+              </button>
             ))}
-          </ul>
-        )}
-      </section>
+          </div>
+        </section>
 
-      <section className="mb-4">
-        <h2 className="h6">Wgraj plik PDF ręcznie</h2>
-        <p className="small text-secondary">
-          Jeśli programu nie ma na liście powyżej, możesz wgrać pobrany wcześniej plik PDF.
-        </p>
-        <button
-          type="button"
-          className="btn btn-outline-primary"
-          disabled={uploading}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <UploadFileIcon size={18} className="me-2" />
-          {uploading ? 'Wczytywanie…' : 'Wybierz plik PDF'}
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/pdf"
-          className="d-none"
-          onChange={handleFileUpload}
-        />
-      </section>
-
-      <section>
-        <h2 className="h6">Automatyczny zapis notatek</h2>
-        <div className="btn-group" role="group">
-          {INTERVAL_OPTIONS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              className={`btn btn-sm ${autosaveMinutes === m ? 'btn-primary' : 'btn-outline-secondary'}`}
-              onClick={() => handleIntervalChange(m)}
-            >
-              co {m} min
-            </button>
-          ))}
-        </div>
-      </section>
+        <section>
+          <h2 className="h6">Pomoc</h2>
+          <button type="button" className="btn btn-outline-secondary" onClick={onShowHelp}>
+            Pokaż jak używać
+          </button>
+        </section>
+      </div>
     </div>
   )
 }

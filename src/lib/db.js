@@ -9,6 +9,7 @@ const SETTINGS_KEY = 'app-settings'
 const DEFAULT_SETTINGS = {
   autosaveIntervalMinutes: 2,
   activeProgramId: null,
+  hasSeenOnboarding: false,
 }
 
 function getDb() {
