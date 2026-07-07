@@ -31,6 +31,8 @@ const PATHS = {
   search:
     'M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z',
   close: 'm256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z',
+  backup:
+    'M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H520q-33 0-56.5-23.5T440-240v-206l-64 62-56-56 160-160 160 160-56 56-64-62v206h220q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41h100v80H260Zm220-280Z',
 }
 
 export const EditDocumentIcon = (props) => <Icon path={PATHS.editDocument} {...props} />
@@ -43,3 +45,4 @@ export const CloudDownloadIcon = (props) => <Icon path={PATHS.cloudDownload} {..
 export const ChevronRightIcon = (props) => <Icon path={PATHS.chevronRight} {...props} />
 export const SearchIcon = (props) => <Icon path={PATHS.search} {...props} />
 export const CloseIcon = (props) => <Icon path={PATHS.close} {...props} />
+export const BackupIcon = (props) => <Icon path={PATHS.backup} {...props} />

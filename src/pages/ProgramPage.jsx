@@ -3,7 +3,9 @@ import { getSettings, getProgram, saveProgram } from '../lib/db'
 import { useAutosave } from '../lib/autosave'
 import { isNonNoteItem, getItemCategory } from '../lib/itemCategory'
 import { matchQuestionsToItems } from '../lib/reviewQuestions'
+import { saveProgramBackup, hasUnsavedBackup, formatMinutesAgo } from '../lib/backupExport'
 import { RichNoteEditor, RichNoteFullscreen } from '../components/RichNoteEditor'
+import { CloseIcon } from '../components/icons/icons'
 
 function buildNotesMap(program) {
   const map = {}
@@ -178,6 +180,43 @@ function ReviewQuestions({ questions, notes, notesMode, onChange, onBlur, onExpa
   )
 }
 
+function BackupReminder({ program, onBackup }) {
+  const [dismissed, setDismissed] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  if (dismissed || !hasUnsavedBackup(program)) return null
+
+  const text = program.lastBackupAt
+    ? `Notatki zmieniły się od ostatniej kopii (${formatMinutesAgo(program.lastBackupAt)}) — zapisz aktualną kopię.`
+    : 'Ten program nie ma jeszcze zapisanej kopii — zapisz kopię.'
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await onBackup()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="backup-reminder">
+      <span className="backup-reminder-text">{text}</span>
+      <button type="button" className="btn btn-sm btn-outline-primary" disabled={saving} onClick={handleSave}>
+        {saving ? '…' : 'Zapisz kopię'}
+      </button>
+      <button
+        type="button"
+        className="btn btn-sm btn-link text-secondary p-1"
+        onClick={() => setDismissed(true)}
+        aria-label="Zamknij przypomnienie"
+      >
+        <CloseIcon size={16} />
+      </button>
+    </div>
+  )
+}
+
 export function ProgramPage({ onNavigate }) {
   const [program, setProgram] = useState(null)
   const [notes, setNotes] = useState({})
@@ -217,6 +256,16 @@ export function ProgramPage({ onNavigate }) {
       return merged
     })
   }, [])
+
+  const handleBackup = useCallback(async () => {
+    // Zawsze wysyłamy do kopii najświeższe notatki, nawet jeśli autosave jeszcze nie zdążył
+    // ich zapisać do IndexedDB.
+    const merged = mergeNotesIntoProgram(program, notesRef.current)
+    await saveProgram(merged)
+    setProgram(merged)
+    const updated = await saveProgramBackup(merged)
+    if (updated) setProgram(updated)
+  }, [program])
 
   useAutosave(() => notesRef.current, persist, autosaveMinutes)
 
@@ -259,6 +308,7 @@ export function ProgramPage({ onNavigate }) {
 
   return (
     <div>
+      <BackupReminder program={program} onBackup={handleBackup} />
       {program.days.length > 1 && (
         <div className="day-tabs d-flex gap-2 pb-2 overflow-auto">
           {program.days.map((d, i) => (

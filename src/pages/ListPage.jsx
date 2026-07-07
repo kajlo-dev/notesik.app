@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { listPrograms, deleteProgram, getSettings, saveSettings } from '../lib/db'
 import { exportProgramNotesToPdf } from '../lib/pdfExport'
 import { hasNoteContent } from '../lib/richText'
-import { DeleteIcon, DownloadIcon, ChevronRightIcon } from '../components/icons/icons'
+import { saveProgramBackup, hasUnsavedBackup, formatMinutesAgo } from '../lib/backupExport'
+import { DeleteIcon, DownloadIcon, ChevronRightIcon, BackupIcon } from '../components/icons/icons'
 import { ProgramThumb } from '../components/ProgramThumb'
 import { CoffeeBanner } from '../components/CoffeeBanner'
 
@@ -25,10 +26,17 @@ function formatDate(iso) {
   }
 }
 
+function backupStatusText(program) {
+  if (!program.lastBackupAt) return 'brak kopii'
+  const stale = hasUnsavedBackup(program)
+  return `kopia ${formatMinutesAgo(program.lastBackupAt)}${stale ? ' (nieaktualna)' : ''}`
+}
+
 export function ListPage({ onNavigate }) {
   const [programs, setPrograms] = useState([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
+  const [backingUpId, setBackingUpId] = useState(null)
 
   const reload = async () => {
     setPrograms(await listPrograms())
@@ -57,6 +65,16 @@ export function ListPage({ onNavigate }) {
       await exportProgramNotesToPdf(program)
     } finally {
       setBusyId(null)
+    }
+  }
+
+  const backupProgram = async (program) => {
+    setBackingUpId(program.id)
+    try {
+      await saveProgramBackup(program)
+      reload()
+    } finally {
+      setBackingUpId(null)
     }
   }
 
@@ -102,8 +120,18 @@ export function ListPage({ onNavigate }) {
                   {program.type === 'kongres' ? 'Kongres' : 'Zgromadzenie'} · aktualizacja{' '}
                   {formatDate(program.updatedAt)} · {programHasNotes(program) ? 'z notatkami' : 'bez notatek'}
                 </div>
+                <div className="small text-secondary">{backupStatusText(program)}</div>
               </button>
               <div className="program-row-actions">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  title="Zapisz kopię (Dysk Google, OneDrive, Pliki…)"
+                  disabled={backingUpId === program.id}
+                  onClick={() => backupProgram(program)}
+                >
+                  <BackupIcon size={18} />
+                </button>
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-secondary"
