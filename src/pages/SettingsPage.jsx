@@ -17,7 +17,7 @@ const TABS = [
   { id: 'pomoc', label: 'Pomoc' },
 ]
 
-export function SettingsPage({ onNavigate, onShowHelp, textSize, onTextSizeChange }) {
+export function SettingsPage({ onNavigate, onShowHelp, onShowWhatsNew, textSize, onTextSizeChange }) {
   const [activeTab, setActiveTab] = useState('program')
   const [available, setAvailable] = useState([])
   const [loadingAvailable, setLoadingAvailable] = useState(true)
@@ -192,10 +192,13 @@ export function SettingsPage({ onNavigate, onShowHelp, textSize, onTextSizeChang
         )}
 
         {activeTab === 'pomoc' && (
-          <section>
+          <section className="d-flex flex-column gap-2 align-items-start">
             <h2 className="h6">Pomoc</h2>
             <button type="button" className="btn btn-outline-secondary" onClick={onShowHelp}>
               Pokaż jak używać
+            </button>
+            <button type="button" className="btn btn-outline-secondary" onClick={onShowWhatsNew}>
+              Co nowego
             </button>
           </section>
         )}

@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS = {
   activeProgramId: null,
   hasSeenOnboarding: false,
   textSize: 'medium',
+  lastSeenChangelogVersion: 0,
 }
 
 function getDb() {
