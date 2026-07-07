@@ -1,16 +1,45 @@
-# React + Vite
+# Notesik.app
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Mobilna aplikacja (PWA) do robienia notatek podczas kongresów i zgromadzeń obwodowych
+Świadków Jehowy. Działa lokalnie na telefonie/tablecie (bez logowania, bez backendu) —
+program pobiera się jako PDF i zamienia na notatnik z polami do wpisywania notatek przy
+każdym punkcie programu.
 
-Currently, two official plugins are available:
+Dostępna pod: https://kajlo-dev.github.io/notesik.app/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Funkcje
 
-## React Compiler
+- **Program** — aktywny program z polami na notatki, z auto-zapisem co 1/2/5 min (do wyboru).
+- **Lista** — wszystkie pobrane programy, możliwość powrotu do nich, usunięcia i eksportu
+  notatek do jednego pliku PDF ("kartki notesika" do wpięcia w skoroszyt).
+- **Ustawienia** — pobieranie programu z aktualnej listy (zsynchronizowanej z jw.org) albo
+  ręczne wgranie własnego pliku PDF; wybór interwału auto-zapisu.
+- Aplikacja celowo blokuje się na dużych ekranach (komputer) — jest zaprojektowana pod telefon
+  i tablet.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Jak to działa technicznie
 
-## Expanding the Oxlint configuration
+- **React + Vite**, dane trzymane lokalnie w IndexedDB (`idb`), bez żadnego backendu.
+- Parser `src/lib/pdfParser.js` (na bazie `pdfjs-dist`) zamienia PDF programu na strukturę
+  dni/sekcji/pozycji, naprawiając po drodze połamane kodowanie polskich znaków diakrytycznych
+  w PDF-ach generowanych przez jw.org (custom font z rozbitą tablicą ToUnicode).
+- Eksport notatek do PDF (`src/lib/pdfExport.js`, `jspdf`) z osadzoną czcionką Roboto (domyślne
+  fonty jsPDF nie obsługują ą/ć/ę/ł/ń/ó/ś/ź/ż).
+- `scripts/sync-programs.mjs` (uruchamiany przez `.github/workflows/sync-programs.yml`) codziennie
+  pobiera aktualną listę programów z jw.org i kopiuje PDF-y do `public/programs/` — omija to brak
+  nagłówków CORS na plikach PDF (oficjalne API metadanych ma CORS, ale sam plik PDF już nie).
+- `.github/workflows/deploy.yml` buduje i publikuje aplikację na GitHub Pages przy każdym pushu
+  do `main`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Rozwój lokalny
+
+```bash
+npm install
+npm run dev
+```
+
+Żeby ręcznie odświeżyć listę programów lokalnie:
+
+```bash
+node scripts/sync-programs.mjs
+```

@@ -1,0 +1,86 @@
+[
+  {
+    "pub": "CO-pgm26",
+    "title": "Program kongresu 2026",
+    "type": "kongres",
+    "file": "programs/CO-pgm26_P.pdf",
+    "modifiedDatetime": "2026-05-21 08:34:17"
+  },
+  {
+    "pub": "CA-copgm27",
+    "title": "Program zgromadzenia obwodowego z nadzorcą obwodu 2026-2027",
+    "type": "zgromadzenie",
+    "file": "programs/CA-copgm27_P.pdf",
+    "modifiedDatetime": "2026-04-16 06:58:53"
+  },
+  {
+    "pub": "CA-brpgm27",
+    "title": "Program zgromadzenia obwodowego z przedstawicielem Biura Oddziału 2026-2027",
+    "type": "zgromadzenie",
+    "file": "programs/CA-brpgm27_P.pdf",
+    "modifiedDatetime": "2026-03-19 10:45:29"
+  },
+  {
+    "pub": "CA-brpgm26",
+    "title": "Program zgromadzenia obwodowego z przedstawicielem Biura Oddziału — 2025-2026",
+    "type": "zgromadzenie",
+    "file": "programs/CA-brpgm26_P.pdf",
+    "modifiedDatetime": "2025-04-23 10:54:29"
+  },
+  {
+    "pub": "CA-copgm26",
+    "title": "Program zgromadzenia obwodowego z nadzorcą obwodu — 2025-2026",
+    "type": "zgromadzenie",
+    "file": "programs/CA-copgm26_P.pdf",
+    "modifiedDatetime": "2025-04-10 06:09:19"
+  },
+  {
+    "pub": "CO-pgm25",
+    "title": "Program kongresu 2025",
+    "type": "kongres",
+    "file": "programs/CO-pgm25_P.pdf",
+    "modifiedDatetime": "2025-01-27 13:12:41"
+  },
+  {
+    "pub": "CA-copgm25",
+    "title": "Program zgromadzenia obwodowego z nadzorcą obwodu — 2024-2025",
+    "type": "zgromadzenie",
+    "file": "programs/CA-copgm25_P.pdf",
+    "modifiedDatetime": "2024-10-23 17:34:19"
+  },
+  {
+    "pub": "CA-brpgm25",
+    "title": "Program zgromadzenia obwodowego z przedstawicielem Biura Oddziału — 2024-2025",
+    "type": "zgromadzenie",
+    "file": "programs/CA-brpgm25_P.pdf",
+    "modifiedDatetime": "2024-03-14 07:58:37"
+  },
+  {
+    "pub": "CO-pgm24",
+    "title": "Program kongresu — 2024",
+    "type": "kongres",
+    "file": "programs/CO-pgm24_P.pdf",
+    "modifiedDatetime": "2024-01-19 10:28:43"
+  },
+  {
+    "pub": "CA-copgm24",
+    "title": "Program zgromadzenia obwodowego z nadzorcą obwodu — 2023-2024",
+    "type": "zgromadzenie",
+    "file": "programs/CA-copgm24_P.pdf",
+    "modifiedDatetime": "2023-12-20 19:13:37"
+  },
+  {
+    "pub": "CO-pgm23",
+    "title": "Program kongresu — 2023",
+    "type": "kongres",
+    "file": "programs/CO-pgm23_P.pdf",
+    "modifiedDatetime": "2023-12-20 14:19:44"
+  },
+  {
+    "pub": "CA-brpgm24",
+    "title": "Program zgromadzenia obwodowego z przedstawicielem Biura Oddziału — 2023-2024",
+    "type": "zgromadzenie",
+    "file": "programs/CA-brpgm24_P.pdf",
+    "modifiedDatetime": "2023-12-20 10:34:57"
+  }
+]
