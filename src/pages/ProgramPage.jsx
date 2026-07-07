@@ -5,9 +5,11 @@ import { isNonNoteItem, getItemCategory } from '../lib/itemCategory'
 import { matchQuestionsToItems } from '../lib/reviewQuestions'
 import { saveProgramBackup, hasUnsavedBackup, formatMinutesAgo } from '../lib/backupExport'
 import { buildNotesMap, mergeNotesIntoProgram } from '../lib/notesModel'
-import { findTodayDayIndex, findCurrentSectionIndex } from '../lib/dayTime'
+import { findTodayDayIndex, findRealTodayDayIndex, findCurrentSectionIndex, findCurrentItemId } from '../lib/dayTime'
 import { RichNoteEditor, RichNoteFullscreen } from '../components/RichNoteEditor'
 import { CloseIcon } from '../components/icons/icons'
+
+const LIVE_CHECK_INTERVAL_MS = 30_000
 
 const CATEGORY_CLASS = {
   przemowienie: 'item-przemowienie',
@@ -15,11 +17,12 @@ const CATEGORY_CLASS = {
   wyklad: 'item-wyklad',
 }
 
-function ItemHeading({ item }) {
+function ItemHeading({ item, isLive }) {
   return (
     <div className="d-flex align-items-center gap-2 mb-1">
       <span className="badge text-bg-light border">{item.time}</span>
       {item.label && <span className="fw-semibold text-uppercase small">{item.label}</span>}
+      {isLive && <span className="badge live-now-badge">● teraz</span>}
     </div>
   )
 }
@@ -42,11 +45,12 @@ function TitleWithQuestionLink({ item, questionId }) {
   )
 }
 
-function SimpleRow({ item }) {
+function SimpleRow({ item, isLive }) {
   return (
-    <div className="d-flex align-items-center gap-2 py-2 px-1 text-secondary small border-bottom">
+    <div id={item.id} className={`simple-row d-flex align-items-center gap-2 py-2 px-1 text-secondary small border-bottom${isLive ? ' item-live' : ''}`}>
       <span className="badge text-bg-light border">{item.time}</span>
       <span className="simple-row-text">{item.title}</span>
+      {isLive && <span className="badge live-now-badge">● teraz</span>}
     </div>
   )
 }
@@ -61,11 +65,11 @@ function NoteSlot({ id, html, notesMode, onChange, onBlur, onExpand, placeholder
   return <RichNoteEditor id={id} html={html} onChange={onChange} onBlur={onBlur} placeholder={placeholder} onExpand={() => onExpand(id)} />
 }
 
-function SymposiumCard({ item, questionId, notes, notesMode, onChange, onBlur, onExpand }) {
+function SymposiumCard({ item, questionId, notes, notesMode, onChange, onBlur, onExpand, isLive }) {
   return (
-    <div id={item.id} className="card mb-3 program-item-card item-sympozjum">
+    <div id={item.id} className={`card mb-3 program-item-card item-sympozjum${isLive ? ' item-live' : ''}`}>
       <div className="card-body">
-        <ItemHeading item={item} />
+        <ItemHeading item={item} isLive={isLive} />
         <TitleWithQuestionLink item={item} questionId={questionId} />
         <div className="ps-3 border-start border-2 mt-2">
           {item.subitems.map((sub, i) => (
@@ -90,12 +94,12 @@ function SymposiumCard({ item, questionId, notes, notesMode, onChange, onBlur, o
   )
 }
 
-function ProgramItem({ item, questionId, note, notesMode, onChange, onBlur, onExpand }) {
+function ProgramItem({ item, questionId, note, notesMode, onChange, onBlur, onExpand, isLive }) {
   const category = getItemCategory(item)
   return (
-    <div id={item.id} className={`card mb-3 program-item-card ${CATEGORY_CLASS[category] || ''}`}>
+    <div id={item.id} className={`card mb-3 program-item-card ${CATEGORY_CLASS[category] || ''}${isLive ? ' item-live' : ''}`}>
       <div className="card-body">
-        <ItemHeading item={item} />
+        <ItemHeading item={item} isLive={isLive} />
         <TitleWithQuestionLink item={item} questionId={questionId} />
         {item.subitems.length > 0 && (
           <ul className="mb-2 ps-3 small text-secondary">
@@ -210,8 +214,10 @@ export function ProgramPage({ onNavigate, focusItemId }) {
   const [activeSectionIndex, setActiveSectionIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [expandedNote, setExpandedNote] = useState(null)
+  const [nowTick, setNowTick] = useState(0)
   const notesRef = useRef(notes)
   notesRef.current = notes
+  const hasAutoScrolledToLiveRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -246,6 +252,13 @@ export function ProgramPage({ onNavigate, focusItemId }) {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [focusItemId, loading, activeDayIndex, activeSectionIndex])
 
+  // Co 30s odświeżamy "aktualny punkt" - żeby podświetlenie samo przeskoczyło dalej w miarę
+  // upływu czasu, bez przeładowania strony.
+  useEffect(() => {
+    const timer = setInterval(() => setNowTick((t) => t + 1), LIVE_CHECK_INTERVAL_MS)
+    return () => clearInterval(timer)
+  }, [])
+
   const persist = useCallback((notesSnapshot) => {
     setProgram((prev) => {
       if (!prev) return prev
@@ -275,6 +288,37 @@ export function ProgramPage({ onNavigate, focusItemId }) {
   )
 
   const questionByItemId = useMemo(() => matchQuestionsToItems(program).itemIdToQuestionId, [program])
+
+  // Podświetlenie "na żywo" ma sens tylko wtedy, gdy faktycznie patrzysz na dzisiejszy dzień
+  // i aktualną porę (a nie np. przeglądasz jutrzejszy program) - inaczej wskazywałoby coś
+  // mylącego.
+  const isViewingLiveSection = useMemo(() => {
+    if (!program) return false
+    const todayIdx = findRealTodayDayIndex(program.days)
+    if (todayIdx === -1 || todayIdx !== activeDayIndex) return false
+    const liveSectionIdx = findCurrentSectionIndex(program.days[todayIdx]?.sections)
+    return liveSectionIdx === activeSectionIndex
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [program, activeDayIndex, activeSectionIndex, nowTick])
+
+  const liveItemId = useMemo(() => {
+    if (!isViewingLiveSection) return null
+    const section = program?.days[activeDayIndex]?.sections[activeSectionIndex]
+    return findCurrentItemId(section?.items)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isViewingLiveSection, program, activeDayIndex, activeSectionIndex, nowTick])
+
+  useEffect(() => {
+    if (!liveItemId || focusItemId || hasAutoScrolledToLiveRef.current || loading) return
+    hasAutoScrolledToLiveRef.current = true
+    const el = document.getElementById(liveItemId)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [liveItemId, focusItemId, loading])
+
+  const jumpToLive = () => {
+    const el = liveItemId && document.getElementById(liveItemId)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   const handleNoteChange = (id, value) => {
     setNotes((prev) => ({ ...prev, [id]: value }))
@@ -347,7 +391,7 @@ export function ProgramPage({ onNavigate, focusItemId }) {
             <h2 className="h6 text-uppercase text-primary mb-2">{section.name}</h2>
             {section.items.map((item) =>
               isNonNoteItem(item) ? (
-                <SimpleRow key={item.id} item={item} />
+                <SimpleRow key={item.id} item={item} isLive={item.id === liveItemId} />
               ) : item.label === 'SYMPOZJUM' ? (
                 <SymposiumCard
                   key={item.id}
@@ -358,6 +402,7 @@ export function ProgramPage({ onNavigate, focusItemId }) {
                   onChange={handleNoteChange}
                   onBlur={handleBlur}
                   onExpand={handleExpand}
+                  isLive={item.id === liveItemId}
                 />
               ) : (
                 <ProgramItem
@@ -369,6 +414,7 @@ export function ProgramPage({ onNavigate, focusItemId }) {
                   onChange={handleNoteChange}
                   onBlur={handleBlur}
                   onExpand={handleExpand}
+                  isLive={item.id === liveItemId}
                 />
               ),
             )}
@@ -392,6 +438,11 @@ export function ProgramPage({ onNavigate, focusItemId }) {
           placeholder={expandedNote.label}
           onClose={handleCloseExpand}
         />
+      )}
+      {liveItemId && !expandedNote && (
+        <button type="button" className="jump-to-live-btn" onClick={jumpToLive}>
+          ● Teraz
+        </button>
       )}
     </div>
   )

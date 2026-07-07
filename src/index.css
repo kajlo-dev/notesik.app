@@ -131,7 +131,8 @@ body {
   font-family: var(--font-note);
 }
 
-.program-item-card[id] {
+.program-item-card[id],
+.simple-row[id] {
   scroll-margin-top: 64px;
 }
 
@@ -364,6 +365,43 @@ body {
 }
 .search-results-table td:first-child {
   max-width: 40vw;
+}
+
+/* --- "Na żywo" - aktualny punkt programu --- */
+.item-live {
+  box-shadow: 0 0 0 2px var(--notesik-primary);
+}
+
+.live-now-badge {
+  background: var(--notesik-primary);
+  color: #fff;
+  font-weight: 600;
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.jump-to-live-btn {
+  position: fixed;
+  right: 16px;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  z-index: 1020;
+  background: var(--notesik-primary);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .desktop-block {

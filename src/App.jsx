@@ -16,17 +16,28 @@ const PAGES = {
   settings: SettingsPage,
 }
 
+const TEXT_SIZE_SCALE = { small: '93.75%', medium: '100%', large: '115%' }
+
 function App() {
   const isMobile = useIsMobile()
   const [tab, setTab] = useState('program')
   const [focusItemId, setFocusItemId] = useState(null)
   const [showHelp, setShowHelp] = useState(false)
+  const [textSize, setTextSize] = useState('medium')
 
   useEffect(() => {
     getSettings().then((settings) => {
       if (!settings.hasSeenOnboarding) setShowHelp(true)
+      setTextSize(settings.textSize || 'medium')
     })
   }, [])
+
+  // Rozmiar tekstu skaluje font-size na <html> - większość typografii Bootstrapa (i nasze
+  // niestandardowe klasy tekstu) używa jednostek rem/em, więc przeskaluje się razem z tym
+  // wszędzie w appce, nie tylko wewnątrz pojedynczej notatki.
+  useEffect(() => {
+    document.documentElement.style.fontSize = TEXT_SIZE_SCALE[textSize] || '100%'
+  }, [textSize])
 
   const closeHelp = async (dontShowAgain) => {
     setShowHelp(false)
@@ -34,6 +45,12 @@ function App() {
       const settings = await getSettings()
       await saveSettings({ ...settings, hasSeenOnboarding: true })
     }
+  }
+
+  const handleTextSizeChange = async (size) => {
+    setTextSize(size)
+    const settings = await getSettings()
+    await saveSettings({ ...settings, textSize: size })
   }
 
   // Nawigacja z opcjonalnym payloadem - np. wyniki wyszukiwania przechodzą do Programu razem
@@ -54,7 +71,13 @@ function App() {
   return (
     <div className="app-shell">
       <div className="app-content">
-        <Page onNavigate={navigate} onShowHelp={() => setShowHelp(true)} focusItemId={tab === 'program' ? focusItemId : null} />
+        <Page
+          onNavigate={navigate}
+          onShowHelp={() => setShowHelp(true)}
+          focusItemId={tab === 'program' ? focusItemId : null}
+          textSize={textSize}
+          onTextSizeChange={handleTextSizeChange}
+        />
       </div>
       <BottomNav active={tab} onChange={handleTabChange} />
       {showHelp && <OnboardingModal onClose={closeHelp} />}

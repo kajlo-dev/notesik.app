@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = {
   autosaveIntervalMinutes: 2,
   activeProgramId: null,
   hasSeenOnboarding: false,
+  textSize: 'medium',
 }
 
 function getDb() {
