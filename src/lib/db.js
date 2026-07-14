@@ -12,6 +12,7 @@ const DEFAULT_SETTINGS = {
   hasSeenOnboarding: false,
   textSize: 'medium',
   lastSeenChangelogVersion: 0,
+  installBannerDismissed: false,
 }
 
 function getDb() {

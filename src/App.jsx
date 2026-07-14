@@ -3,6 +3,7 @@ import { useIsMobile } from './lib/useIsMobile'
 import { getSettings, saveSettings } from './lib/db'
 import { CHANGELOG_VERSION } from './lib/changelog'
 import { DesktopBlock } from './components/DesktopBlock'
+import { InstallBanner } from './components/InstallBanner'
 import { BottomNav } from './components/BottomNav'
 import { OnboardingModal } from './components/OnboardingModal'
 import { WhatsNewModal } from './components/WhatsNewModal'
@@ -88,6 +89,7 @@ function App() {
       <div className="app-topbar">
         <div className="app-topbar-label">Notesik Lite</div>
       </div>
+      <InstallBanner />
       <div className="app-content">
         <Page
           onNavigate={navigate}
