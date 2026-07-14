@@ -1,11 +1,12 @@
 import { CHANGELOG } from '../lib/changelog'
 import { CloseIcon } from './icons/icons'
 
-// "RRRR-MM-DD" albo "RRRR-MM-DD GG:MM" -> "DD.MM.RRRR[, GG:MM]"
+// "RRRR-MM-DD" albo "RRRR-MM-DD GG:MM" -> "DD-MM-RR[ GG:MM]"
 function formatEntryDate({ date }) {
   const [datePart, timePart] = date.split(' ')
   const [y, m, d] = datePart.split('-')
-  return timePart ? `${d}.${m}.${y}, ${timePart}` : `${d}.${m}.${y}`
+  const shortYear = y.slice(-2)
+  return timePart ? `${d}-${m}-${shortYear} ${timePart}` : `${d}-${m}-${shortYear}`
 }
 
 function ChangelogItems({ entry }) {
