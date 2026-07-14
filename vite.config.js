@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icon.svg'],
       manifest: {
-        name: 'Notesik.app',
-        short_name: 'Notesik',
+        name: 'Notesik Lite',
+        short_name: 'Notesik Lite',
         description: 'Notatki do programu kongresu i zgromadzenia',
         start_url: '/notesik.app/',
         scope: '/notesik.app/',

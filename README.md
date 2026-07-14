@@ -1,6 +1,6 @@
-# Notesik.app
+# Notesik Lite
 
-Notesik.app to prosta aplikacja mobilna do robienia notatek podczas kongresów i zgromadzeń
+Notesik Lite to prosta aplikacja mobilna do robienia notatek podczas kongresów i zgromadzeń
 obwodowych Świadków Jehowy. Pobierasz program w PDF, aplikacja sama zamienia go w notatnik
 z osobnym polem na notatkę przy każdym punkcie programu — nie trzeba niczego przepisywać ręcznie.
 

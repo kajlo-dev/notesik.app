@@ -12,7 +12,7 @@ export function OnboardingModal({ onClose }) {
         </button>
       </div>
       <div className="rich-note-fullscreen-body">
-        <h1 className="h5 mb-3">Jak używać Notesik.app</h1>
+        <h1 className="h5 mb-3">Jak używać Notesik Lite</h1>
 
         <h2 className="h6 text-primary">📝 Program</h2>
         <p className="text-secondary">
