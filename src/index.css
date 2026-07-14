@@ -170,27 +170,33 @@ body {
   flex: 1 1 auto;
 }
 
-.version-history {
+.version-history,
+.changelog-history {
   margin-top: 6px;
 }
 
-.version-history summary {
+.version-history summary,
+.changelog-history summary {
   color: var(--notesik-primary);
   font-size: 0.8rem;
   cursor: pointer;
   list-style: none;
 }
-.version-history summary::-webkit-details-marker {
+.version-history summary::-webkit-details-marker,
+.changelog-history summary::-webkit-details-marker {
   display: none;
 }
-.version-history summary::before {
+.version-history summary::before,
+.changelog-history summary::before {
   content: '▸ ';
 }
-.version-history[open] summary::before {
+.version-history[open] summary::before,
+.changelog-history[open] summary::before {
   content: '▾ ';
 }
 
-.version-history ul {
+.version-history ul,
+.changelog-history ul {
   padding-left: 14px;
 }
 
