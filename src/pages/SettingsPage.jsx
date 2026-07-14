@@ -227,7 +227,19 @@ export function SettingsPage({ onNavigate, onShowHelp, onShowWhatsNew, textSize,
                   {installed ? 'Aplikacja już zainstalowana' : 'Zainstaluj aplikację'}
                 </button>
               )}
+              <a
+                href={`${import.meta.env.BASE_URL}apps/android/moj-notesik.apk`}
+                download
+                className="btn btn-outline-mojnotesik"
+              >
+                <DownloadIcon size={18} className="me-2" />
+                Pobierz Mój Notesik (Android)
+              </a>
             </div>
+            <p className="small text-secondary mt-2 mb-0">
+              Mój Notesik to pełna, natywna edycja tej aplikacji. Po pobraniu pliku .apk otwórz
+              go i zezwól na instalację z nieznanych źródeł, jeśli telefon o to poprosi.
+            </p>
           </section>
         )}
       </div>

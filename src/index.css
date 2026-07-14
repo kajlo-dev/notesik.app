@@ -84,6 +84,20 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* Przycisk w kolorze "Mój Notesik" (pełnej edycji) - fiolet #5B3C88,
+   spójny konturowy styl jak wbudowane btn-outline-* z Bootstrapa. */
+.btn-outline-mojnotesik {
+  color: #5B3C88;
+  border-color: #5B3C88;
+  background-color: transparent;
+}
+.btn-outline-mojnotesik:hover,
+.btn-outline-mojnotesik:focus {
+  color: #fff;
+  background-color: #5B3C88;
+  border-color: #5B3C88;
+}
+
 .app-content {
   flex: 1 1 auto;
   overflow-y: auto;
