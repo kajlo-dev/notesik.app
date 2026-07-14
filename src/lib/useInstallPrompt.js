@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
@@ -13,42 +13,56 @@ function isIOSSafari() {
   return isIOS && !isOtherIOSBrowser
 }
 
-// Chrome/Edge/Android wywołują "beforeinstallprompt", gdy strona spełnia kryteria
-// instalowalności (manifest, service worker, https) - niezależnie od tego, czy użytkownik
-// wcześniej odinstalował appkę. Dzięki temu własny przycisk działa nawet wtedy, gdy
-// przeglądarka akurat nie pokazuje własnego, automatycznego banera instalacji.
-export function useInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [installed, setInstalled] = useState(isStandalone())
+// "beforeinstallprompt" wywołuje się raz na wczytanie strony - często zanim zdąży się
+// zamontować komponent, który akurat go potrzebuje (np. zakładka Pomoc, otwierana dopiero po
+// kliknięciu, długo po tym jak baner instalacji już go złapał). Dlatego nasłuch i złapane
+// zdarzenie trzymamy na poziomie modułu, wspólnie dla wszystkich komponentów używających tego
+// hooka, zamiast każdy z nich rejestrował własny, osobny listener.
+let deferredPrompt = null
+let installed = isStandalone()
+let snapshot = { deferredPrompt, installed }
+const listeners = new Set()
 
-  useEffect(() => {
-    const onBeforeInstallPrompt = (e) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-    }
-    const onAppInstalled = () => {
-      setInstalled(true)
-      setDeferredPrompt(null)
-    }
-    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
-    window.addEventListener('appinstalled', onAppInstalled)
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
-      window.removeEventListener('appinstalled', onAppInstalled)
-    }
-  }, [])
+function publish() {
+  snapshot = { deferredPrompt, installed }
+  listeners.forEach((listener) => listener())
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault()
+  deferredPrompt = e
+  publish()
+})
+window.addEventListener('appinstalled', () => {
+  installed = true
+  deferredPrompt = null
+  publish()
+})
+
+function subscribe(listener) {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+function getSnapshot() {
+  return snapshot
+}
+
+export function useInstallPrompt() {
+  const state = useSyncExternalStore(subscribe, getSnapshot)
 
   const promptInstall = async () => {
     if (!deferredPrompt) return
     deferredPrompt.prompt()
     await deferredPrompt.userChoice
-    setDeferredPrompt(null)
+    deferredPrompt = null
+    publish()
   }
 
   return {
-    installed,
-    canInstall: !!deferredPrompt,
-    showManualIOSInstructions: !installed && isIOSSafari(),
+    installed: state.installed,
+    canInstall: !!state.deferredPrompt,
+    showManualIOSInstructions: !state.installed && isIOSSafari(),
     promptInstall,
   }
 }
