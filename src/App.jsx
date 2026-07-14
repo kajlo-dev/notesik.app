@@ -85,6 +85,9 @@ function App() {
 
   return (
     <div className="app-shell">
+      <div className="app-topbar">
+        <div className="app-topbar-label">Notesik Lite</div>
+      </div>
       <div className="app-content">
         <Page
           onNavigate={navigate}

@@ -18,7 +18,7 @@ export default defineConfig({
         scope: '/notesik.app/',
         display: 'standalone',
         background_color: '#0f1115',
-        theme_color: '#1b6b57',
+        theme_color: '#2f6fed',
         icons: [
           {
             src: 'icon.svg',
