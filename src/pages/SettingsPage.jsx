@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { getSettings, saveSettings } from '../lib/db'
 import { fetchAvailablePrograms, downloadAndImportProgram, importProgramFromFile } from '../lib/programsRepo'
-import { CloudDownloadIcon, UploadFileIcon } from '../components/icons/icons'
+import { useInstallPrompt } from '../lib/useInstallPrompt'
+import { CloudDownloadIcon, UploadFileIcon, DownloadIcon } from '../components/icons/icons'
 import { ProgramThumb } from '../components/ProgramThumb'
 import { CoffeeBanner } from '../components/CoffeeBanner'
 
@@ -26,6 +27,7 @@ export function SettingsPage({ onNavigate, onShowHelp, onShowWhatsNew, textSize,
   const [autosaveMinutes, setAutosaveMinutes] = useState(2)
   const [message, setMessage] = useState(null)
   const fileInputRef = useRef(null)
+  const { installed, canInstall, showManualIOSInstructions, promptInstall } = useInstallPrompt()
 
   useEffect(() => {
     fetchAvailablePrograms().then((list) => {
@@ -52,6 +54,19 @@ export function SettingsPage({ onNavigate, onShowHelp, onShowWhatsNew, textSize,
       setMessage({ type: 'danger', text: 'Nie udało się pobrać lub przetworzyć programu.' })
     } finally {
       setDownloadingPub(null)
+    }
+  }
+
+  const handleInstallClick = async () => {
+    if (canInstall) {
+      await promptInstall()
+      return
+    }
+    if (showManualIOSInstructions) {
+      setMessage({
+        type: 'info',
+        text: 'Stuknij ikonę udostępniania (□↑) w przeglądarce, a potem „Dodaj do ekranu początkowego”.',
+      })
     }
   }
 
@@ -192,14 +207,27 @@ export function SettingsPage({ onNavigate, onShowHelp, onShowWhatsNew, textSize,
         )}
 
         {activeTab === 'pomoc' && (
-          <section className="d-flex flex-column gap-2 align-items-start">
-            <h2 className="h6">Pomoc</h2>
-            <button type="button" className="btn btn-outline-secondary" onClick={onShowHelp}>
-              Pokaż jak używać
-            </button>
-            <button type="button" className="btn btn-outline-secondary" onClick={onShowWhatsNew}>
-              Co nowego
-            </button>
+          <section>
+            <h2 className="h6 mb-3">Pomoc</h2>
+            <div className="d-grid gap-2">
+              <button type="button" className="btn btn-outline-primary" onClick={onShowHelp}>
+                Pokaż jak używać
+              </button>
+              <button type="button" className="btn btn-outline-info" onClick={onShowWhatsNew}>
+                Co nowego
+              </button>
+              {(installed || canInstall || showManualIOSInstructions) && (
+                <button
+                  type="button"
+                  className={`btn ${installed ? 'btn-outline-secondary' : 'btn-outline-success'}`}
+                  disabled={installed}
+                  onClick={handleInstallClick}
+                >
+                  <DownloadIcon size={18} className="me-2" />
+                  {installed ? 'Aplikacja już zainstalowana' : 'Zainstaluj aplikację'}
+                </button>
+              )}
+            </div>
           </section>
         )}
       </div>

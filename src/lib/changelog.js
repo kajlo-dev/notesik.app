@@ -3,6 +3,16 @@
 // CHANGELOG_VERSION - okno samo pokaże się ponownie tym, którzy widzieli starszą wersję.
 export const CHANGELOG = [
   {
+    version: 3,
+    date: '2026-07-14',
+    items: [
+      'Aplikacja zmieniła nazwę na Notesik Lite - nowa ikona i kolor paska u góry ekranu',
+      'Odnośniki biblijne w notatkach (np. „Ps 16:11”) same zamieniają się w linki do jw.org po Enterze',
+      'Przycisk „Zainstaluj” w Ustawieniach -> Pomoc - instalacja na ekranie głównym jednym dotknięciem',
+      'Okno „Co nowego” (to, które właśnie widzisz) pokazuje się automatycznie po każdej aktualizacji',
+    ],
+  },
+  {
     version: 2,
     date: '2026-07-07',
     items: [
